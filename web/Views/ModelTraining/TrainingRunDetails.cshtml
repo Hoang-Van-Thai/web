@@ -1,0 +1,63 @@
+﻿@model web.ViewModels.ModelTrainingRunItemViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết huấn luyện";
+}
+
+<div class="container py-3">
+    <h3>Chi tiết phiên huấn luyện</h3>
+
+    <div class="card shadow-sm mt-3">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-md-3">Mã phiên</dt>
+                <dd class="col-md-9">@Model.TrainingRunId</dd>
+
+                <dt class="col-md-3">Tên phiên</dt>
+                <dd class="col-md-9">@Model.TrainingName</dd>
+
+                <dt class="col-md-3">Model</dt>
+                <dd class="col-md-9">@Model.VersionName</dd>
+
+                <dt class="col-md-3">Trạng thái</dt>
+                <dd class="col-md-9">@Model.Status</dd>
+
+                <dt class="col-md-3">Dữ liệu bắt đầu</dt>
+                <dd class="col-md-9">
+                    @(Model.DataStartDate?.ToString("dd/MM/yyyy") ?? "-")
+                </dd>
+
+                <dt class="col-md-3">Dữ liệu kết thúc</dt>
+                <dd class="col-md-9">
+                    @(Model.DataEndDate?.ToString("dd/MM/yyyy") ?? "-")
+                </dd>
+
+                <dt class="col-md-3">MAE</dt>
+                <dd class="col-md-9">@(Model.Mae?.ToString("N6") ?? "-")</dd>
+
+                <dt class="col-md-3">RMSE</dt>
+                <dd class="col-md-9">@(Model.Rmse?.ToString("N6") ?? "-")</dd>
+
+                <dt class="col-md-3">RMSSE</dt>
+                <dd class="col-md-9">@(Model.Rmsse?.ToString("N6") ?? "-")</dd>
+
+                <dt class="col-md-3">Bắt đầu</dt>
+                <dd class="col-md-9">
+                    @(Model.StartedAt?.ToString("dd/MM/yyyy HH:mm:ss") ?? "-")
+                </dd>
+
+                <dt class="col-md-3">Hoàn thành</dt>
+                <dd class="col-md-9">
+                    @(Model.CompletedAt?.ToString("dd/MM/yyyy HH:mm:ss") ?? "-")
+                </dd>
+
+                <dt class="col-md-3">Log</dt>
+                <dd class="col-md-9">
+                    <pre class="bg-light p-3 rounded text-wrap">@Model.LogMessage</pre>
+                </dd>
+            </dl>
+
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </div>
+</div>

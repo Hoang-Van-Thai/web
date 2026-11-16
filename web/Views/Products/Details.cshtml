@@ -1,0 +1,101 @@
+﻿@model web.Models.Entities.Product
+
+@{
+    ViewData["Title"] = "Chi tiết sản phẩm";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold">Chi tiết sản phẩm</h3>
+            <p class="text-muted">Thông tin đầy đủ của sản phẩm</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary btn-back">
+            Quay lại
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">@Model.ProductName</h5>
+
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <small class="text-muted">Mã sản phẩm</small>
+                    <div class="fw-semibold">@Model.ProductCode</div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Danh mục</small>
+                    <div class="fw-semibold">
+                        @Model.Category?.CategoryName
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Đơn vị</small>
+                    <div>@Model.Unit</div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Giá nhập</small>
+                    <div>@Model.CostPrice.ToString("N0") VNĐ</div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Giá bán</small>
+                    <div class="fw-bold text-primary">
+                        @Model.SellingPrice.ToString("N0") VNĐ
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Tồn kho tối thiểu</small>
+                    <div>@Model.MinStock</div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Ngày tạo</small>
+                    <div>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <small class="text-muted">Trạng thái</small>
+                    <div>
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Ngừng hoạt động</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <small class="text-muted">Mô tả</small>
+                    <p class="mb-0">
+                        @(string.IsNullOrWhiteSpace(Model.Description)
+                            ? "Chưa có mô tả."
+                            : Model.Description)
+                    </p>
+                </div>
+
+            </div>
+
+            <hr />
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.ProductId"
+               class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Chỉnh sửa
+            </a>
+
+        </div>
+    </div>
+</div>

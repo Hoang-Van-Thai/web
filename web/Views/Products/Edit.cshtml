@@ -1,0 +1,46 @@
+﻿@model web.ViewModels.ProductViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold">Chỉnh sửa sản phẩm</h3>
+        <p class="text-muted">
+            Cập nhật thông tin sản phẩm @Model.ProductCode
+        </p>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+            <form asp-action="Edit"
+                  asp-route-id="@Model.ProductId"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <partial name="_ProductForm" model="Model" />
+
+                <hr />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Hủy
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

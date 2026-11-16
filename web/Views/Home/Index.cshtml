@@ -1,0 +1,481 @@
+﻿@* @{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="mb-4">
+    <h4 class="fw-bold">Tổng quan kinh doanh</h4>
+    <p class="text-secondary">
+        Chào mừng bạn đến với hệ thống quản lý RetailFlow.
+    </p>
+</div>
+
+<div class="row g-3">
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-secondary">Tổng doanh thu</div>
+            <h3 class="fw-bold mt-2">125.500.000 đ</h3>
+            <span class="text-success">
+                <i class="bi bi-arrow-up"></i> 12.5%
+            </span>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-secondary">Đơn hàng</div>
+            <h3 class="fw-bold mt-2">1.250</h3>
+            <span class="text-success">
+                <i class="bi bi-arrow-up"></i> 8.2%
+            </span>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-secondary">Sản phẩm đã bán</div>
+            <h3 class="fw-bold mt-2">3.580</h3>
+            <span class="text-success">
+                <i class="bi bi-arrow-up"></i> 15.4%
+            </span>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-secondary">Sản phẩm tồn kho</div>
+            <h3 class="fw-bold mt-2">850</h3>
+            <span class="text-danger">
+                <i class="bi bi-arrow-down"></i> 3.5%
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<div class="card border-0 shadow-sm mt-4 p-4">
+    <h5 class="fw-bold">Doanh thu gần đây</h5>
+    <p class="text-secondary">
+        Biểu đồ doanh thu sẽ được tích hợp bằng Chart.js ở bước tiếp theo.
+    </p>
+
+    <div style="height: 220px"
+         class="d-flex justify-content-center align-items-center bg-light rounded">
+        <span class="text-secondary">
+            Khu vực biểu đồ doanh thu
+        </span>
+    </div>
+</div> *@
+
+@model web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var chartLabels = System.Text.Json.JsonSerializer.Serialize(
+        Model.DailyRevenue.Select(x => x.Date.ToString("dd/MM"))
+    );
+
+    var chartValues = System.Text.Json.JsonSerializer.Serialize(
+        Model.DailyRevenue.Select(x => x.Revenue)
+    );
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Dashboard</h3>
+            <p class="text-muted mb-0">
+                Tổng quan hoạt động kinh doanh ngày @DateTime.Today.ToString("dd/MM/yyyy")
+            </p>
+        </div>
+
+        <span class="badge bg-primary p-2">
+            <i class="bi bi-calendar3"></i>
+            @DateTime.Now.ToString("dd/MM/yyyy")
+        </span>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">Doanh thu hôm nay</p>
+                            <h4 class="fw-bold text-primary mb-0">
+                                @Model.TodayRevenue.ToString("N0") đ
+                            </h4>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded p-3">
+                            <i class="bi bi-cash-stack fs-3 text-primary"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        @Model.TodayOrders đơn hàng hoàn thành
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">Doanh thu tháng này</p>
+                            <h4 class="fw-bold text-success mb-0">
+                                @Model.MonthRevenue.ToString("N0") đ
+                            </h4>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded p-3">
+                            <i class="bi bi-graph-up-arrow fs-3 text-success"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        @Model.MonthOrders đơn hàng hoàn thành
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">Tổng sản phẩm</p>
+                            <h4 class="fw-bold mb-0">
+                                @Model.TotalProducts
+                            </h4>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded p-3">
+                            <i class="bi bi-box-seam fs-3 text-info"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Sản phẩm đang hoạt động</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1">Tổng khách hàng</p>
+                            <h4 class="fw-bold mb-0">
+                                @Model.TotalCustomers
+                            </h4>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded p-3">
+                            <i class="bi bi-people fs-3 text-warning"></i>
+                        </div>
+                    </div>
+                    <small class="text-muted">Khách hàng trong hệ thống</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVENUE CHART -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="fw-bold mb-0">Doanh thu 7 ngày gần nhất</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 320px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="fw-bold mb-0">Tình trạng tồn kho</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-3">
+                        <h1 class="fw-bold text-danger">
+                            @Model.LowStockProductCount
+                        </h1>
+                        <p class="text-muted mb-0">
+                            Sản phẩm đang tồn kho thấp
+                        </p>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between">
+                        <span>Tổng sản phẩm</span>
+                        <strong>@Model.TotalProducts</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Sản phẩm tồn thấp</span>
+                        <strong class="text-danger">
+                            @Model.LowStockProductCount
+                        </strong>
+                    </div>
+
+                    <a asp-controller="Inventory"
+                       asp-action="Index"
+                       class="btn btn-outline-primary w-100 mt-4">
+                        Xem kho hàng
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECENT ORDERS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between">
+            <h5 class="fw-bold mb-0">Đơn hàng gần đây</h5>
+            <a asp-controller="Orders"
+               asp-action="Index"
+               class="text-decoration-none">
+                Xem tất cả
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Cửa hàng</th>
+                            <th>Ngày đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.RecentOrders.Any())
+                        {
+                            foreach (var order in Model.RecentOrders)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        @order.OrderCode
+                                    </td>
+                                    <td>@order.CustomerName</td>
+                                    <td>@order.StoreName</td>
+                                    <td>
+                                        @order.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td class="fw-semibold">
+                                        @order.TotalAmount.ToString("N0") đ
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Orders"
+                                           asp-action="Details"
+                                           asp-route-id="@order.OrderId"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    Chưa có đơn hàng hoàn thành.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP PRODUCTS AND LOW STOCK -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="fw-bold mb-0">Top 5 sản phẩm bán chạy</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Số lượng bán</th>
+                                    <th>Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.TopProducts.Any())
+                                {
+                                    foreach (var product in Model.TopProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    @product.ProductName
+                                                </div>
+                                                <small class="text-muted">
+                                                    @product.ProductCode
+                                                </small>
+                                            </td>
+                                            <td>@product.QuantitySold.ToString("N0")</td>
+                                            <td>
+                                                @product.Revenue.ToString("N0") đ
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            Chưa có dữ liệu bán hàng.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="fw-bold mb-0">
+                        Sản phẩm tồn kho thấp
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Tồn hiện tại</th>
+                                    <th>Tồn tối thiểu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.LowStockProducts.Any())
+                                {
+                                    foreach (var product in Model.LowStockProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    @product.ProductName
+                                                </div>
+                                                <small class="text-muted">
+                                                    @product.ProductCode
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="text-danger fw-bold">
+                                                    @product.CurrentStock.ToString("N0")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @product.MinStock.ToString("N0")
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">
+                                            Không có sản phẩm tồn kho thấp.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const labels = @Html.Raw(chartLabels);
+        const values = @Html.Raw(chartValues);
+
+        const ctx = document.getElementById('revenueChart');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: values,
+                    borderWidth: 2,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return new Intl.NumberFormat('vi-VN').format(
+                                    context.raw
+                                ) + ' đ';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('vi-VN').format(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

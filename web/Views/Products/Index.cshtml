@@ -1,0 +1,286 @@
+﻿@model IEnumerable<web.Models.Entities.Product>
+
+@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+    int page = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Quản lý sản phẩm</h3>
+            <p class="text-muted mb-0">
+                Quản lý danh sách sản phẩm RetailFlow
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Export"
+               asp-route-keyword="@ViewBag.Keyword"
+               asp-route-categoryId="@ViewBag.CategoryId"
+               asp-route-isActive="@ViewBag.IsActive"
+               class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                Xuất Excel
+            </a>
+
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Tổng sản phẩm phù hợp</div>
+                    <h3 class="fw-bold mb-0">@ViewBag.TotalItems</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BO LOC -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+
+                    <div class="col-lg-4">
+                        <label class="form-label">Tìm kiếm</label>
+                        <input name="keyword"
+                               value="@ViewBag.Keyword"
+                               class="form-control"
+                               placeholder="Mã hoặc tên sản phẩm..." />
+                    </div>
+
+                    <div class="col-lg-3">
+                        <label class="form-label">Danh mục</label>
+                        <select name="categoryId"
+                                asp-items="ViewBag.Categories"
+                                class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <label class="form-label">Trạng thái</label>
+                        <select name="isActive" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="true"
+                                    selected="@(ViewBag.IsActive is true)">
+                                Hoạt động
+                            </option>
+                            <option value="false"
+                                    selected="@(ViewBag.IsActive is false)">
+                                Ngừng hoạt động
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <label class="form-label">Sắp xếp</label>
+                        <select name="sort" class="form-select">
+                            <option value="">Mới nhất</option>
+                            <option value="name"
+                                    selected="@(ViewBag.Sort as string == "name")">
+                                Tên A-Z
+                            </option>
+                            <option value="price_asc"
+                                    selected="@(ViewBag.Sort as string == "price_asc")">
+                                Giá tăng
+                            </option>
+                            <option value="price_desc"
+                                    selected="@(ViewBag.Sort as string == "price_desc")">
+                                Giá giảm
+                            </option>
+                            <option value="oldest"
+                                    selected="@(ViewBag.Sort as string == "oldest")">
+                                Cũ nhất
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-1 d-flex align-items-end">
+                        <button class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BANG SAN PHAM -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">Danh sách sản phẩm</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Đơn vị</th>
+                            <th>Giá nhập</th>
+                            <th>Giá bán</th>
+                            <th>Tồn tối thiểu</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            int stt = (page - 1) * (int)ViewBag.PageSize + 1;
+
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@stt</td>
+                                    <td class="fw-semibold">
+                                        @item.ProductCode
+                                    </td>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Category?.CategoryName</td>
+                                    <td>@item.Unit</td>
+                                    <td>@item.CostPrice.ToString("N0") đ</td>
+                                    <td class="fw-semibold text-primary">
+                                        @item.SellingPrice.ToString("N0") đ
+                                    </td>
+                                    <td>@item.MinStock</td>
+                                    <td>
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                Hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Ngừng hoạt động
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-outline-info"
+                                               title="Chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.ProductId"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+
+                                            @if (item.IsActive)
+                                            {
+                                                <a asp-action="Delete"
+                                                   asp-route-id="@item.ProductId"
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   title="Ngừng hoạt động">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                                stt++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10"
+                                    class="text-center py-5 text-muted">
+                                    Không tìm thấy sản phẩm.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PHAN TRANG -->
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination justify-content-end mb-0">
+
+                        <li class="page-item @(page <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(page - 1)"
+                               asp-route-keyword="@ViewBag.Keyword"
+                               asp-route-categoryId="@ViewBag.CategoryId"
+                               asp-route-isActive="@ViewBag.IsActive"
+                               asp-route-sort="@ViewBag.Sort">
+                                Trước
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-keyword="@ViewBag.Keyword"
+                                   asp-route-categoryId="@ViewBag.CategoryId"
+                                   asp-route-isActive="@ViewBag.IsActive"
+                                   asp-route-sort="@ViewBag.Sort">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@(page + 1)"
+                               asp-route-keyword="@ViewBag.Keyword"
+                               asp-route-categoryId="@ViewBag.CategoryId"
+                               asp-route-isActive="@ViewBag.IsActive"
+                               asp-route-sort="@ViewBag.Sort">
+                                Sau
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

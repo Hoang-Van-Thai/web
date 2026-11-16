@@ -1,0 +1,93 @@
+﻿@model web.ViewModels.ProductViewModel
+
+<div asp-validation-summary="ModelOnly"
+     class="alert alert-danger"></div>
+
+<input type="hidden" asp-for="ProductId" />
+
+<div class="row g-3">
+
+    <div class="col-md-6">
+        <label asp-for="ProductCode" class="form-label"></label>
+        <input asp-for="ProductCode" class="form-control"
+               placeholder="Ví dụ: SP007" />
+        <span asp-validation-for="ProductCode"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="ProductName" class="form-label"></label>
+        <input asp-for="ProductName" class="form-control"
+               placeholder="Nhập tên sản phẩm" />
+        <span asp-validation-for="ProductName"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="CategoryId" class="form-label"></label>
+        <select asp-for="CategoryId"
+                asp-items="ViewBag.Categories"
+                class="form-select">
+            <option value="">-- Chọn danh mục --</option>
+        </select>
+        <span asp-validation-for="CategoryId"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Unit" class="form-label"></label>
+        <input asp-for="Unit" class="form-control"
+               placeholder="Gói, Chai, Hộp..." />
+        <span asp-validation-for="Unit"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="CostPrice" class="form-label"></label>
+        <div class="input-group">
+            <input asp-for="CostPrice" type="number"
+                   min="0" step="0.01" class="form-control" />
+            <span class="input-group-text">VNĐ</span>
+        </div>
+        <span asp-validation-for="CostPrice"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="SellingPrice" class="form-label"></label>
+        <div class="input-group">
+            <input asp-for="SellingPrice" type="number"
+                   min="0" step="0.01" class="form-control" />
+            <span class="input-group-text">VNĐ</span>
+        </div>
+        <span asp-validation-for="SellingPrice"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="MinStock" class="form-label"></label>
+        <input asp-for="MinStock" type="number"
+               min="0" class="form-control" />
+        <span asp-validation-for="MinStock"
+              class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="IsActive" class="form-label"></label>
+        <select asp-for="IsActive" class="form-select">
+            <option value="true">Hoạt động</option>
+            <option value="false">Ngừng hoạt động</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description"
+                  class="form-control"
+                  rows="4"
+                  placeholder="Mô tả sản phẩm..."></textarea>
+        <span asp-validation-for="Description"
+              class="text-danger"></span>
+    </div>
+
+</div>

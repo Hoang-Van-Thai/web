@@ -1,0 +1,171 @@
+﻿@model web.ViewModels.InventoryHistoryViewModel
+
+@{
+    ViewData["Title"] = "Lịch sử nhập xuất kho";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Lịch sử nhập xuất kho</h2>
+            <p class="text-muted mb-0">
+                Theo dõi các giao dịch nhập và xuất hàng hóa
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại tồn kho
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="History" method="get">
+                <div class="row g-3">
+
+                    <div class="col-md-3">
+                        <label class="form-label">Tìm kiếm</label>
+                        <input name="keyword"
+                               value="@Model.Keyword"
+                               class="form-control"
+                               placeholder="Mã giao dịch, mã SP, tên SP..." />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Loại giao dịch</label>
+                        <select name="transactionType" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="IN"
+                                    selected="@(Model.TransactionType == "IN")">
+                                Nhập kho
+                            </option>
+                            <option value="OUT"
+                                    selected="@(Model.TransactionType == "OUT")">
+                                Xuất kho
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Kho hàng</label>
+                        <select name="warehouseId" class="form-select">
+                            <option value="">Tất cả kho</option>
+                            @foreach (var item in Model.Warehouses)
+                            {
+                                <option value="@item.Value"
+                                        selected="@(Model.WarehouseId?.ToString() == item.Value)">
+                                    @item.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date"
+                               name="fromDate"
+                               value="@Model.FromDate?.ToString("yyyy-MM-dd")"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date"
+                               name="toDate"
+                               value="@Model.ToDate?.ToString("yyyy-MM-dd")"
+                               class="form-control" />
+                    </div>
+
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" type="submit">
+                            Lọc
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <strong>
+                Danh sách giao dịch (@Model.Items.Count)
+            </strong>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Mã tham chiếu</th>
+                        <th>Sản phẩm</th>
+                        <th>Kho</th>
+                        <th>Loại giao dịch</th>
+                        <th class="text-end">Số lượng</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @item.TransactionDate.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    <strong>@item.ReferenceCode</strong>
+                                </td>
+
+                                <td>
+                                    @item.Product.ProductCode
+                                    <br />
+                                    <small class="text-muted">
+                                        @item.Product.ProductName
+                                    </small>
+                                </td>
+
+                                <td>@item.Warehouse.WarehouseName</td>
+
+                                <td>
+                                    @if (item.TransactionType == "IN")
+                                    {
+                                        <span class="badge bg-success">Nhập kho</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Xuất kho</span>
+                                    }
+                                </td>
+
+                                <td class="text-end fw-bold">
+                                    @item.Quantity.ToString("N3")
+                                    @item.Product.Unit
+                                </td>
+
+                                <td>@item.Note</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                Không có giao dịch phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

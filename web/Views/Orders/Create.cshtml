@@ -1,0 +1,721 @@
+﻿@model web.ViewModels.OrderFormViewModel
+
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Tạo đơn hàng";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold">Tạo đơn hàng</h2>
+            <p class="text-muted mb-0">
+                Nhập thông tin và sản phẩm cần bán
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+
+            <i class="bi bi-arrow-left"></i>
+            Quay lại
+
+        </a>
+
+    </div>
+
+    <form asp-action="Create" method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All"
+             class="alert alert-danger">
+        </div>
+
+        <!-- THONG TIN DON HANG -->
+        <div class="card shadow-sm border-0 mb-4">
+
+            <div class="card-header bg-white py-3">
+
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-receipt"></i>
+                    Thông tin đơn hàng
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <label asp-for="OrderCode"
+                               class="form-label">
+                            Mã đơn hàng
+                        </label>
+
+                        <input asp-for="OrderCode"
+                               class="form-control"
+                               readonly />
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="OrderDate"
+                               class="form-label">
+                            Ngày tạo
+                        </label>
+
+                        <input asp-for="OrderDate"
+                               type="datetime-local"
+                               class="form-control"
+                               asp-format="{0:yyyy-MM-ddTHH:mm}" />
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="StoreId"
+                               class="form-label">
+                            Cửa hàng
+                        </label>
+
+                        <select asp-for="StoreId"
+                                asp-items="Model.Stores"
+                                class="form-select"
+                                id="StoreId">
+
+                            <option value="">
+                                -- Chọn cửa hàng --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="StoreId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="WarehouseId"
+                               class="form-label">
+                            Kho xuất hàng
+                        </label>
+
+                        <select asp-for="WarehouseId"
+                                asp-items="Model.Warehouses"
+                                class="form-select"
+                                id="WarehouseId">
+
+                            <option value="">
+                                -- Chọn kho --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="WarehouseId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="CustomerId"
+                               class="form-label">
+                            Khách hàng
+                        </label>
+
+                        <select asp-for="CustomerId"
+                                asp-items="Model.Customers"
+                                class="form-select">
+
+                            <option value="">
+                                Khách lẻ
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="DiscountAmount"
+                               class="form-label">
+                            Giảm giá đơn hàng (VNĐ)
+                        </label>
+
+                        <input asp-for="DiscountAmount"
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               class="form-control"
+                               id="DiscountAmount" />
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label asp-for="Note"
+                               class="form-label">
+                            Ghi chú
+                        </label>
+
+                        <textarea asp-for="Note"
+                                  class="form-control"
+                                  rows="2"
+                                  placeholder="Nhập ghi chú nếu có...">
+                        </textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SAN PHAM -->
+        <div class="card shadow-sm border-0 mb-4">
+
+            <div class="card-header bg-white py-3">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-box-seam"></i>
+                        Sản phẩm trong đơn hàng
+                    </h5>
+
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            id="addProduct">
+
+                        <i class="bi bi-plus-lg"></i>
+                        Thêm sản phẩm
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+
+                    <table class="table table-bordered align-middle"
+                           id="productTable">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th style="min-width:250px">
+                                    Sản phẩm
+                                </th>
+
+                                <th style="width:140px">
+                                    Số lượng
+                                </th>
+
+                                <th style="width:180px">
+                                    Đơn giá
+                                </th>
+
+                                <th style="width:180px">
+                                    Giảm giá
+                                </th>
+
+                                <th style="width:180px">
+                                    Thành tiền
+                                </th>
+
+                                <th style="width:80px">
+                                    Xóa
+                                </th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @for (int i = 0; i < Model.Items.Count; i++)
+                            {
+                                <tr>
+
+                                    <td>
+
+                                        <select name="Items[@i].ProductId"
+                                                class="form-select product-select"
+                                                required>
+
+                                            <option value="">
+                                                -- Chọn sản phẩm --
+                                            </option>
+
+                                            @foreach (var p in Model.Products)
+                                            {
+                                                <option value="@p.Value"
+                                                        selected="@(Model.Items[i].ProductId.ToString() == p.Value)">
+
+                                                    @p.Text
+
+                                                </option>
+                                            }
+
+                                        </select>
+
+                                    </td>
+
+                                    <td>
+
+                                        <input name="Items[@i].Quantity"
+                                               type="number"
+                                               class="form-control quantity"
+                                               min="0.001"
+                                               step="0.001"
+                                               value="@Model.Items[i].Quantity"
+                                               required />
+
+                                    </td>
+
+                                    <td>
+
+                                        <input type="text"
+                                               class="form-control unit-price"
+                                               value="Tự động"
+                                               readonly />
+
+                                    </td>
+
+                                    <td>
+
+                                        <input name="Items[@i].DiscountAmount"
+                                               type="number"
+                                               class="form-control discount"
+                                               min="0"
+                                               step="0.01"
+                                               value="@Model.Items[i].DiscountAmount" />
+
+                                    </td>
+
+                                    <td>
+
+                                        <input type="text"
+                                               class="form-control line-total"
+                                               value="0"
+                                               readonly />
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <button type="button"
+                                                class="btn btn-outline-danger remove-product">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="text-muted small">
+                    Đơn giá được lấy từ giá bán hiện tại trong database.
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TONG TIEN -->
+        <div class="card shadow-sm border-0 mb-4">
+
+            <div class="card-body">
+
+                <div class="row justify-content-end">
+
+                    <div class="col-md-5">
+
+                        <div class="d-flex justify-content-between mb-2">
+
+                            <span>Tạm tính:</span>
+
+                            <strong id="subTotal">0 đ</strong>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+
+                            <span>Giảm giá:</span>
+
+                            <strong class="text-danger"
+                                    id="totalDiscount">
+                                0 đ
+                            </strong>
+
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+
+                            <h5 class="fw-bold">
+                                Tổng thanh toán:
+                            </h5>
+
+                            <h5 class="fw-bold text-primary"
+                                id="grandTotal">
+                                0 đ
+                            </h5>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- BUTTON -->
+        <div class="d-flex justify-content-end gap-2">
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary">
+                Hủy
+            </a>
+
+            <button type="submit"
+                    class="btn btn-primary">
+
+                <i class="bi bi-save"></i>
+                Lưu đơn hàng
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        const productData = @Html.Raw(
+                    JsonSerializer.Serialize(
+                            Model.Products.Select(x => new
+                            {
+                                    value = x.Value,
+                                    text = x.Text
+                            })
+                    )
+            );
+
+        const productTable =
+            document.querySelector("#productTable tbody");
+
+        const storeSelect =
+            document.getElementById("StoreId");
+
+        const warehouseSelect =
+            document.getElementById("WarehouseId");
+
+        // =====================================
+        // FORMAT TIEN
+        // =====================================
+
+        function formatMoney(value) {
+
+            return Number(value || 0).toLocaleString("vi-VN")
+                + " đ";
+
+        }
+
+        // =====================================
+        // TAO OPTION SAN PHAM
+        // =====================================
+
+        function getProductOptions() {
+
+            let html = '<option value="">-- Chọn sản phẩm --</option>';
+
+            productData.forEach(p => {
+
+                html += `
+                    <option value="${p.value}">
+                        ${p.text}
+                    </option>
+                `;
+
+            });
+
+            return html;
+
+        }
+
+        // =====================================
+        // TINH TONG TIEN HIEN THI
+        // =====================================
+
+        function calculateTotal() {
+
+            let subTotal = 0;
+            let itemDiscount = 0;
+
+            document.querySelectorAll("#productTable tbody tr")
+                .forEach(row => {
+
+                    const quantity =
+                        Number(row.querySelector(".quantity").value) || 0;
+
+                    const discount =
+                        Number(row.querySelector(".discount").value) || 0;
+
+                    const select =
+                        row.querySelector(".product-select");
+
+                    const selectedProduct =
+                        productData.find(p => p.value === select.value);
+
+                    // Giá được hiển thị theo text của danh sách sản phẩm.
+                    // Server vẫn là nơi quyết định giá bán thực tế.
+                    let unitPrice = 0;
+
+                    if (selectedProduct) {
+
+                        const match = selectedProduct.text.match(
+                            /\(([\d.,]+)\)$/
+                        );
+
+                        if (match) {
+
+                            unitPrice = Number(
+                                match[1].replaceAll(".", "").replace(",", ".")
+                            );
+
+                        }
+
+                    }
+
+                    const lineSubTotal =
+                        unitPrice * quantity;
+
+                    const lineTotal =
+                        Math.max(0, lineSubTotal - discount);
+
+                    row.querySelector(".unit-price").value =
+                        unitPrice > 0 ? formatMoney(unitPrice) : "Tự động";
+
+                    row.querySelector(".line-total").value =
+                        formatMoney(lineTotal);
+
+                    subTotal += lineSubTotal;
+
+                    itemDiscount += discount;
+
+                });
+
+            const orderDiscount =
+                Number(document.getElementById("DiscountAmount").value) || 0;
+
+            const totalDiscount =
+                itemDiscount + orderDiscount;
+
+            const grandTotal =
+                Math.max(0, subTotal - totalDiscount);
+
+            document.getElementById("subTotal").textContent =
+                formatMoney(subTotal);
+
+            document.getElementById("totalDiscount").textContent =
+                formatMoney(totalDiscount);
+
+            document.getElementById("grandTotal").textContent =
+                formatMoney(grandTotal);
+
+        }
+
+        // =====================================
+        // THEM SAN PHAM
+        // =====================================
+
+        document.getElementById("addProduct")
+            .addEventListener("click", function () {
+
+                const index = productTable.rows.length;
+
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+
+                    <td>
+                        <select name="Items[${index}].ProductId"
+                                class="form-select product-select"
+                                required>
+                            ${getProductOptions()}
+                        </select>
+                    </td>
+
+                    <td>
+                        <input name="Items[${index}].Quantity"
+                               type="number"
+                               class="form-control quantity"
+                               min="0.001"
+                               step="0.001"
+                               value="1"
+                               required />
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               class="form-control unit-price"
+                               value="Tự động"
+                               readonly />
+                    </td>
+
+                    <td>
+                        <input name="Items[${index}].DiscountAmount"
+                               type="number"
+                               class="form-control discount"
+                               min="0"
+                               step="0.01"
+                               value="0" />
+                    </td>
+
+                    <td>
+                        <input type="text"
+                               class="form-control line-total"
+                               value="0"
+                               readonly />
+                    </td>
+
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-outline-danger remove-product">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+
+                `;
+
+                productTable.appendChild(row);
+
+                calculateTotal();
+
+            });
+
+        // =====================================
+        // XOA SAN PHAM
+        // =====================================
+
+        productTable.addEventListener("click", function (e) {
+
+            const button =
+                e.target.closest(".remove-product");
+
+            if (!button) return;
+
+            button.closest("tr").remove();
+
+            // Đánh lại index để ASP.NET Model Binder nhận đúng danh sách.
+            [...productTable.rows].forEach((row, index) => {
+
+                row.querySelector(".product-select").name =
+                    `Items[${index}].ProductId`;
+
+                row.querySelector(".quantity").name =
+                    `Items[${index}].Quantity`;
+
+                row.querySelector(".discount").name =
+                    `Items[${index}].DiscountAmount`;
+
+            });
+
+            calculateTotal();
+
+        });
+
+        // =====================================
+        // THAY DOI SO LUONG / SAN PHAM / GIAM GIA
+        // =====================================
+
+        productTable.addEventListener("input", calculateTotal);
+
+        productTable.addEventListener("change", calculateTotal);
+
+        document.getElementById("DiscountAmount")
+            .addEventListener("input", calculateTotal);
+
+        // =====================================
+        // CHON CUA HANG -> LOAD KHO
+        // =====================================
+
+        storeSelect.addEventListener("change", async function () {
+
+            const storeId = this.value;
+
+            warehouseSelect.innerHTML =
+                '<option value="">-- Chọn kho --</option>';
+
+            if (!storeId) return;
+
+            try {
+
+                const response = await fetch(
+                    '@Url.Action("GetWarehouses", "Orders")?storeId='
+                    + encodeURIComponent(storeId)
+                );
+
+                if (!response.ok) {
+                    throw new Error("Không thể tải danh sách kho.");
+                }
+
+                const warehouses = await response.json();
+
+                warehouses.forEach(w => {
+
+                    const option = document.createElement("option");
+
+                    option.value = w.id;
+
+                    option.textContent = w.name;
+
+                    warehouseSelect.appendChild(option);
+
+                });
+
+            }
+            catch (error) {
+
+                alert(error.message);
+
+            }
+
+        });
+
+        // Tính tiền khi mở trang
+        calculateTotal();
+
+    </script>
+}

@@ -1,0 +1,54 @@
+﻿@model web.Models.Entities.Product
+
+@{
+    ViewData["Title"] = "Ngừng hoạt động sản phẩm";
+}
+
+<div class="container py-4">
+
+    <h3 class="fw-bold mb-2">Ngừng hoạt động sản phẩm</h3>
+
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+
+            <div class="alert alert-warning">
+                Bạn có chắc chắn muốn ngừng hoạt động sản phẩm này?
+                Sản phẩm sẽ không còn được xem là đang kinh doanh.
+            </div>
+
+            <h5>@Model.ProductName</h5>
+
+            <p class="text-muted">
+                Mã sản phẩm: @Model.ProductCode
+            </p>
+
+            @if ((bool)ViewBag.HasTransactions)
+            {
+                <div class="alert alert-danger">
+                    Sản phẩm đã phát sinh giao dịch.
+                    Hệ thống không cho phép ngừng hoạt động
+                    bằng thao tác này.
+                </div>
+            }
+            else
+            {
+                <form asp-action="Delete"
+                      asp-route-id="@Model.ProductId"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit" class="btn btn-danger">
+                        Xác nhận ngừng hoạt động
+                    </button>
+                </form>
+            }
+
+            <a asp-action="Index"
+               class="btn btn-outline-secondary mt-3">
+                Quay lại
+            </a>
+
+        </div>
+    </div>
+</div>

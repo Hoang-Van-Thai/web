@@ -1,0 +1,357 @@
+﻿@model web.ViewModels.StoreDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết cửa hàng";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="mb-3">
+        <a asp-action="Index" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">@Model.StoreName</h2>
+            <p class="text-muted mb-0">
+                Mã cửa hàng: @Model.StoreCode
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Edit"
+               asp-route-id="@Model.StoreId"
+               class="btn btn-primary">
+                <i class="bi bi-pencil"></i>
+                Chỉnh sửa
+            </a>
+
+            <form asp-action="ToggleStatus"
+                  asp-route-id="@Model.StoreId"
+                  method="post"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái cửa hàng này?');">
+
+                @Html.AntiForgeryToken()
+
+                @if (Model.IsActive)
+                {
+                    <button type="submit" class="btn btn-warning">
+                        Ngừng hoạt động
+                    </button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-success">
+                        Kích hoạt lại
+                    </button>
+                }
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Trạng thái</div>
+
+                    @if (Model.IsActive)
+                    {
+                        <h4 class="text-success fw-bold mb-0">
+                            Đang hoạt động
+                        </h4>
+                    }
+                    else
+                    {
+                        <h4 class="text-secondary fw-bold mb-0">
+                            Ngừng hoạt động
+                        </h4>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Số kho hàng</div>
+                    <h3 class="fw-bold mb-0">
+                        @Model.WarehouseCount
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng đơn hàng</div>
+                    <h3 class="fw-bold mb-0">
+                        @Model.OrderCount
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Ngày tạo</div>
+                    <h5 class="fw-bold mb-0">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy")
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Thông tin cửa hàng</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Mã cửa hàng</div>
+                    <strong>@Model.StoreCode</strong>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Tên cửa hàng</div>
+                    <strong>@Model.StoreName</strong>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Số điện thoại</div>
+                    <strong>
+                        @(string.IsNullOrWhiteSpace(Model.Phone)
+                            ? "Chưa cập nhật"
+                            : Model.Phone)
+                    </strong>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Địa chỉ</div>
+                    <strong>
+                        @(string.IsNullOrWhiteSpace(Model.Address)
+                            ? "Chưa cập nhật"
+                            : Model.Address)
+                    </strong>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">
+                    Danh sách kho hàng
+                </h5>
+
+                <a asp-controller="Warehouses"
+                   asp-action="Create"
+                   asp-route-storeId="@Model.StoreId"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    Thêm kho
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã kho</th>
+                        <th>Tên kho</th>
+                        <th>Địa chỉ</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Warehouses.Any())
+                    {
+                        foreach (var warehouse in Model.Warehouses)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@warehouse.WarehouseCode</strong>
+                                </td>
+
+                                <td>@warehouse.WarehouseName</td>
+
+                                <td>@warehouse.Address</td>
+
+                                <td>
+                                    @if (warehouse.IsActive)
+                                    {
+                                        <span class="badge bg-success">
+                                            Hoạt động
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Ngừng hoạt động
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4"
+                                class="text-center text-muted py-3">
+                                Cửa hàng chưa có kho hàng.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">
+                10 đơn hàng gần nhất
+            </h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã đơn hàng</th>
+                        <th>Ngày đặt</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.RecentOrders.Any())
+                    {
+                        foreach (var order in Model.RecentOrders)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@order.OrderCode</strong>
+                                </td>
+
+                                <td>
+                                    @order.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td class="text-end">
+                                    @order.TotalAmount.ToString("N0") đ
+                                </td>
+
+                                <td>
+                                    @if (order.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success">
+                                            Hoàn thành
+                                        </span>
+                                    }
+                                    else if (order.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-danger">
+                                            Đã hủy
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @order.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a asp-controller="Orders"
+                                       asp-action="Details"
+                                       asp-route-id="@order.OrderId"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-3">
+                                Cửa hàng chưa có đơn hàng.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-danger">
+        <div class="card-body">
+            <h5 class="fw-bold text-danger">Xóa cửa hàng</h5>
+
+            <p class="text-muted">
+                Chỉ có thể xóa cửa hàng khi chưa phát sinh kho hàng
+                hoặc đơn hàng. Nếu cửa hàng đã có dữ liệu liên quan,
+                hãy sử dụng chức năng ngừng hoạt động.
+            </p>
+
+            <form asp-action="Delete"
+                  asp-route-id="@Model.StoreId"
+                  method="post"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa cửa hàng này?');">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                    Xóa cửa hàng
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>

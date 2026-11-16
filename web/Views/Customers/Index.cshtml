@@ -1,0 +1,159 @@
+﻿@model web.ViewModels.CustomerIndexViewModel
+
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Quản lý khách hàng</h3>
+            <div class="text-muted">Danh sách và thông tin khách hàng</div>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm khách hàng
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted">Tổng khách hàng</div>
+                    <h3 class="fw-bold">@Model.TotalCustomers</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted">Đã phát sinh đơn hàng</div>
+                    <h3 class="fw-bold text-success">
+                        @Model.CustomersWithOrders
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="text-muted">Chưa có đơn hàng</div>
+                    <h3 class="fw-bold text-secondary">
+                        @Model.CustomersWithoutOrders
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <form method="get" asp-action="Index" class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <input name="keyword"
+                           value="@Model.Keyword"
+                           class="form-control"
+                           placeholder="Tìm mã, tên, số điện thoại hoặc email..." />
+                </div>
+
+                <div class="col-auto">
+                    <button class="btn btn-primary">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Làm mới
+                    </a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã khách hàng</th>
+                            <th>Họ tên</th>
+                            <th>Số điện thoại</th>
+                            <th>Email</th>
+                            <th class="text-center">Đơn hàng</th>
+                            <th class="text-end">Tổng chi tiêu</th>
+                            <th>Đơn gần nhất</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Items.Any())
+                        {
+                            foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.CustomerCode</td>
+                                    <td>@item.FullName</td>
+                                    <td>@(item.Phone ?? "—")</td>
+                                    <td>@(item.Email ?? "—")</td>
+
+                                    <td class="text-center">
+                                        @item.OrderCount
+                                    </td>
+
+                                    <td class="text-end">
+                                        @item.TotalSpent.ToString("N0") đ
+                                    </td>
+
+                                    <td>
+                                        @(item.LastOrderDate?.ToString("dd/MM/yyyy") ?? "—")
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-action="Details"
+                                           asp-route-id="@item.CustomerId"
+                                           class="btn btn-sm btn-outline-info"
+                                           title="Chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.CustomerId"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    Không tìm thấy khách hàng.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>

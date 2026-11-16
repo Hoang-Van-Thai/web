@@ -1,0 +1,181 @@
+﻿@model web.ViewModels.ForecastDetailViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Chi tiết dự báo";
+
+    var chartData = Model.Details
+        .GroupBy(x => x.ForecastDate)
+        .OrderBy(x => x.Key)
+        .Select(x => new
+        {
+            Date = x.Key.ToString("dd/MM"),
+            Quantity = x.Sum(y => y.PredictedQuantity)
+        })
+        .ToList();
+
+    var labelsJson = JsonSerializer.Serialize(
+        chartData.Select(x => x.Date)
+    );
+
+    var valuesJson = JsonSerializer.Serialize(
+        chartData.Select(x => x.Quantity)
+    );
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>Chi tiết dự báo</h3>
+            <p class="text-muted mb-0">@Model.ForecastName</p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-secondary">
+            Quay lại
+        </a>
+    </div>
+
+    @if (Model.Status == "Completed")
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Model</div>
+                        <h5>@Model.ModelVersionName</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Cửa hàng</div>
+                        <h5>@Model.StoreName</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Thời gian dự báo</div>
+                        <h5>@Model.HorizonDays ngày</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted">Tổng số lượng dự báo</div>
+                        <h5 class="text-primary">
+                            @Model.TotalPredictedQuantity.ToString("N2")
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Biểu đồ nhu cầu dự báo</h5>
+            </div>
+
+            <div class="card-body">
+                <canvas id="forecastChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Chi tiết dự báo theo sản phẩm</h5>
+            </div>
+
+            <div class="card-body table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Mã sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Đơn vị</th>
+                            <th>Ngày dự báo</th>
+                            <th>Số lượng dự báo</th>
+                            <th>Số lượng thực tế</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model.Details)
+                        {
+                            <tr>
+                                <td>@item.ProductCode</td>
+                                <td>@item.ProductName</td>
+                                <td>@item.Unit</td>
+                                <td>@item.ForecastDate.ToString("dd/MM/yyyy")</td>
+                                <td class="fw-bold text-primary">
+                                    @item.PredictedQuantity.ToString("N2")
+                                </td>
+                                <td>
+                                    @(item.ActualQuantity?.ToString("N2") ?? "-")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Phiên dự báo hiện có trạng thái: <strong>@Model.Status</strong>.
+            Chưa có kết quả dự báo hoàn chỉnh.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const labels = @Html.Raw(labelsJson);
+        const values = @Html.Raw(valuesJson);
+
+        const canvas = document.getElementById('forecastChart');
+
+        if (canvas && labels.length > 0) {
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng dự báo',
+                        data: values,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Số lượng'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Ngày'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,313 @@
+﻿@model web.ViewModels.RfmIndexViewModel
+
+@{
+    ViewData["Title"] = "Phân tích RFM";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1">Phân tích khách hàng RFM</h3>
+        <div class="text-muted">
+            Phân nhóm khách hàng theo Recency, Frequency và Monetary
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Tổng khách hàng</div>
+                    <h3 class="fw-bold">@Model.TotalCustomers</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Đã từng mua hàng</div>
+                    <h3 class="fw-bold text-success">
+                        @Model.ActiveCustomers
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Chưa từng mua hàng</div>
+                    <h3 class="fw-bold text-secondary">
+                        @Model.InactiveCustomers
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Champions</div>
+                    <h3 class="fw-bold text-primary">
+                        @Model.Champions
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Loyal</div>
+                    <h4 class="fw-bold">@Model.LoyalCustomers</h4>
+                    <small>Khách hàng trung thành</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Potential</div>
+                    <h4 class="fw-bold">@Model.PotentialCustomers</h4>
+                    <small>Khách hàng tiềm năng</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">At Risk</div>
+                    <h4 class="fw-bold text-warning">
+                        @Model.AtRiskCustomers
+                    </h4>
+                    <small>Khách hàng có nguy cơ rời bỏ</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Hibernating</div>
+                    <h4 class="fw-bold text-danger">
+                        @Model.HibernatingCustomers
+                    </h4>
+                    <small>Khách hàng lâu không quay lại</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Ý nghĩa các chỉ số RFM</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <strong>Recency (R)</strong>
+                    <p class="text-muted mb-0">
+                        Số ngày từ lần mua hàng gần nhất đến hiện tại.
+                        Số ngày càng thấp thì điểm R càng cao.
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Frequency (F)</strong>
+                    <p class="text-muted mb-0">
+                        Tổng số đơn hàng hoàn thành của khách hàng.
+                        Số đơn càng nhiều thì điểm F càng cao.
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Monetary (M)</strong>
+                    <p class="text-muted mb-0">
+                        Tổng số tiền khách hàng đã chi tiêu.
+                        Tổng chi tiêu càng lớn thì điểm M càng cao.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Danh sách phân nhóm khách hàng</h5>
+
+                <form asp-action="Index" method="get" class="d-flex gap-2">
+                    <select name="segment" class="form-select">
+                        <option value="">Tất cả nhóm</option>
+
+                        <option value="Champions"
+                                selected="@(Model.SegmentFilter == "Champions")">
+                            Champions
+                        </option>
+
+                        <option value="Loyal"
+                                selected="@(Model.SegmentFilter == "Loyal")">
+                            Loyal
+                        </option>
+
+                        <option value="New Customers"
+                                selected="@(Model.SegmentFilter == "New Customers")">
+                            New Customers
+                        </option>
+
+                        <option value="Potential"
+                                selected="@(Model.SegmentFilter == "Potential")">
+                            Potential
+                        </option>
+
+                        <option value="At Risk"
+                                selected="@(Model.SegmentFilter == "At Risk")">
+                            At Risk
+                        </option>
+
+                        <option value="Hibernating"
+                                selected="@(Model.SegmentFilter == "Hibernating")">
+                            Hibernating
+                        </option>
+
+                        <option value="Chưa mua hàng"
+                                selected="@(Model.SegmentFilter == "Chưa mua hàng")">
+                            Chưa mua hàng
+                        </option>
+
+                        <option value="Needs Attention"
+                                selected="@(Model.SegmentFilter == "Needs Attention")">
+                            Needs Attention
+                        </option>
+                    </select>
+
+                    <button class="btn btn-primary">
+                        Lọc
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Xóa lọc
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã KH</th>
+                        <th>Khách hàng</th>
+                        <th>Ngày mua gần nhất</th>
+                        <th class="text-center">R</th>
+                        <th class="text-center">F</th>
+                        <th class="text-center">M</th>
+                        <th class="text-center">RFM</th>
+                        <th class="text-center">Nhóm</th>
+                        <th class="text-end">Tổng chi tiêu</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.CustomerCode</td>
+
+                                <td>
+                                    <div class="fw-semibold">
+                                        @item.FullName
+                                    </div>
+                                    <small class="text-muted">
+                                        @(item.Phone ?? "—")
+                                    </small>
+                                </td>
+
+                                <td>
+                                    @(item.LastOrderDate?.ToString("dd/MM/yyyy") ?? "Chưa mua")
+                                    @if (item.Recency.HasValue)
+                                    {
+                                        <small class="text-muted d-block">
+                                            @item.Recency ngày trước
+                                        </small>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    @item.RScore
+                                </td>
+
+                                <td class="text-center">
+                                    @item.FScore
+                                </td>
+
+                                <td class="text-center">
+                                    @item.MScore
+                                </td>
+
+                                <td class="text-center fw-bold">
+                                    @item.RfmCode
+                                </td>
+
+                                <td class="text-center">
+                                    @if (item.Segment == "Champions")
+                                    {
+                                        <span class="badge bg-success">
+                                            @item.Segment
+                                        </span>
+                                    }
+                                    else if (item.Segment == "At Risk" ||
+                                             item.Segment == "Hibernating")
+                                    {
+                                        <span class="badge bg-danger">
+                                            @item.Segment
+                                        </span>
+                                    }
+                                    else if (item.Segment == "Chưa mua hàng")
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @item.Segment
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">
+                                            @item.Segment
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+                                    @item.Monetary.ToString("N0") đ
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9"
+                                class="text-center text-muted py-4">
+                                Không có khách hàng thuộc nhóm này.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

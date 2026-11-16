@@ -1,0 +1,98 @@
+﻿@model web.Models.Entities.Category
+
+@{
+    ViewData["Title"] = "Xóa danh mục";
+}
+
+<div class="container py-4">
+
+    <h3 class="fw-bold mb-2">
+        Xóa danh mục
+    </h3>
+
+    <p class="text-muted">
+        Kiểm tra thông tin trước khi thực hiện xóa.
+    </p>
+
+    <div class="card border-0 shadow-sm mt-4">
+
+        <div class="card-body p-4">
+
+            @if ((bool)ViewBag.HasProducts)
+            {
+                <div class="alert alert-danger">
+
+                    <h5 class="fw-bold">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Không thể xóa danh mục
+                    </h5>
+
+                    Danh mục này đang có sản phẩm liên kết.
+
+                    Hệ thống không cho phép xóa để bảo vệ dữ liệu
+                    sản phẩm và lịch sử giao dịch.
+
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+
+                    <i class="bi bi-exclamation-triangle"></i>
+
+                    Bạn có chắc chắn muốn xóa danh mục này?
+
+                    Thao tác này không thể hoàn tác.
+
+                </div>
+            }
+
+            <h5 class="fw-bold">
+                @Model.CategoryName
+            </h5>
+
+            <p class="text-muted">
+                Mã danh mục: @Model.CategoryCode
+            </p>
+
+            <p class="text-muted">
+                ID: @Model.CategoryId
+            </p>
+
+            <hr />
+
+            <div class="d-flex gap-2">
+
+                @if (!(bool)ViewBag.HasProducts)
+                {
+                    <form asp-action="Delete"
+                          asp-route-id="@Model.CategoryId"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-danger">
+
+                            <i class="bi bi-trash"></i>
+                            Xác nhận xóa
+
+                        </button>
+
+                    </form>
+                }
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+
+                    Quay lại
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

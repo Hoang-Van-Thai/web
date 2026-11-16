@@ -1,0 +1,247 @@
+﻿@model web.ViewModels.InventoryIndexViewModel
+
+@{
+    ViewData["Title"] = "Quản lý tồn kho";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Quản lý tồn kho</h2>
+            <p class="text-muted mb-0">
+                Theo dõi số lượng hàng hóa tại các kho
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Movement"
+               asp-route-type="IN"
+               class="btn btn-success">
+                <i class="bi bi-box-arrow-in-down"></i>
+                Nhập kho
+            </a>
+
+            <a asp-action="Movement"
+               asp-route-type="OUT"
+               class="btn btn-danger">
+                <i class="bi bi-box-arrow-up"></i>
+                Xuất kho
+            </a>
+
+            <a asp-action="History"
+               class="btn btn-outline-primary">
+                <i class="bi bi-clock-history"></i>
+                Lịch sử
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Số sản phẩm</div>
+                    <h3 class="fw-bold mb-0">
+                        @Model.TotalProducts
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng số lượng tồn</div>
+                    <h3 class="fw-bold mb-0">
+                        @Model.TotalQuantity.ToString("N3")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Sản phẩm cần chú ý</div>
+                    <h3 class="fw-bold text-danger mb-0">
+                        @Model.LowStockCount
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label class="form-label">Tìm sản phẩm</label>
+                        <input type="text"
+                               name="keyword"
+                               value="@Model.Keyword"
+                               class="form-control"
+                               placeholder="Mã hoặc tên sản phẩm..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Kho hàng</label>
+                        <select name="warehouseId"
+                                class="form-select">
+                            <option value="">Tất cả kho</option>
+                            @foreach (var item in Model.Warehouses)
+                            {
+                                <option value="@item.Value"
+                                        selected="@(Model.WarehouseId?.ToString() == item.Value)">
+                                    @item.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Tình trạng tồn</label>
+                        <select name="stockStatus" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="low"
+                                    selected="@(Model.StockStatus == "low")">
+                                Sắp hết hàng
+                            </option>
+                            <option value="normal"
+                                    selected="@(Model.StockStatus == "normal")">
+                                Còn hàng
+                            </option>
+                            <option value="out"
+                                    selected="@(Model.StockStatus == "out")">
+                                Hết hàng
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            Tìm kiếm
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary">
+                            Xóa lọc
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">Danh sách tồn kho</h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã sản phẩm</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Kho</th>
+                        <th class="text-end">Tồn kho</th>
+                        <th class="text-end">Tồn tối thiểu</th>
+                        <th>Trạng thái</th>
+                        <th>Cập nhật</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        var index = 1;
+
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>
+                                    <strong>@item.ProductCode</strong>
+                                </td>
+                                <td>@item.ProductName</td>
+                                <td>@item.WarehouseName</td>
+
+                                <td class="text-end fw-bold">
+                                    @item.Quantity.ToString("N3")
+                                    @item.Unit
+                                </td>
+
+                                <td class="text-end">
+                                    @item.MinStock
+                                </td>
+
+                                <td>
+                                    @if (item.Quantity <= 0)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Hết hàng
+                                        </span>
+                                    }
+                                    else if (item.IsLowStock)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Sắp hết
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            Bình thường
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    <a asp-action="Details"
+                                       asp-route-id="@item.ProductId"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                Không tìm thấy dữ liệu tồn kho.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

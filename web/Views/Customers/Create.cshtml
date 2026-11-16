@@ -1,0 +1,36 @@
+﻿@model web.ViewModels.CustomerFormViewModel
+
+@{
+    ViewData["Title"] = "Thêm khách hàng";
+}
+
+<div class="container py-3">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h4 class="mb-0">Thêm khách hàng</h4>
+        </div>
+
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <partial name="_CustomerForm" model="Model" />
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Lưu khách hàng
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

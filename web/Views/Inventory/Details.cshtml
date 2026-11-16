@@ -1,0 +1,224 @@
+﻿@model web.ViewModels.InventoryDetailViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết tồn kho";
+}
+
+<div class="container-fluid py-3">
+
+    <div class="mb-3">
+        <a asp-action="Index" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Quay lại tồn kho
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Chi tiết tồn kho</h2>
+            <p class="text-muted mb-0">
+                @Model.ProductCode - @Model.ProductName
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Movement"
+               asp-route-type="IN"
+               asp-route-productId="@Model.ProductId"
+               class="btn btn-success">
+                Nhập kho
+            </a>
+
+            <a asp-action="Movement"
+               asp-route-type="OUT"
+               asp-route-productId="@Model.ProductId"
+               class="btn btn-danger">
+                Xuất kho
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng tồn kho</div>
+                    <h3 class="fw-bold">
+                        @Model.TotalQuantity.ToString("N3")
+                        @Model.Unit
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tồn tối thiểu</div>
+                    <h3 class="fw-bold">
+                        @Model.MinStock @Model.Unit
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Trạng thái</div>
+
+                    @if (Model.TotalQuantity <= 0)
+                    {
+                        <h3 class="text-danger fw-bold">Hết hàng</h3>
+                    }
+                    else if (Model.TotalQuantity <= Model.MinStock)
+                    {
+                        <h3 class="text-warning fw-bold">Sắp hết hàng</h3>
+                    }
+                    else
+                    {
+                        <h3 class="text-success fw-bold">Bình thường</h3>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Tồn kho theo từng kho</h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Kho hàng</th>
+                        <th class="text-end">Số lượng tồn</th>
+                        <th class="text-end">Tồn tối thiểu</th>
+                        <th>Trạng thái</th>
+                        <th>Cập nhật</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Warehouses.Any())
+                    {
+                        foreach (var item in Model.Warehouses)
+                        {
+                            <tr>
+                                <td>@item.WarehouseName</td>
+
+                                <td class="text-end fw-bold">
+                                    @item.Quantity.ToString("N3")
+                                    @item.Unit
+                                </td>
+
+                                <td class="text-end">
+                                    @item.MinStock
+                                </td>
+
+                                <td>
+                                    @if (item.Quantity <= 0)
+                                    {
+                                        <span class="badge bg-danger">Hết hàng</span>
+                                    }
+                                    else if (item.IsLowStock)
+                                    {
+                                        <span class="badge bg-warning text-dark">Sắp hết</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Bình thường</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">
+                                Sản phẩm chưa có tồn kho tại kho nào.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">100 giao dịch gần nhất</h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ngày giao dịch</th>
+                        <th>Loại</th>
+                        <th>Kho</th>
+                        <th>Mã tham chiếu</th>
+                        <th class="text-end">Số lượng</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Transactions.Any())
+                    {
+                        foreach (var item in Model.Transactions)
+                        {
+                            <tr>
+                                <td>
+                                    @item.TransactionDate.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    @if (item.TransactionType == "IN")
+                                    {
+                                        <span class="badge bg-success">Nhập kho</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Xuất kho</span>
+                                    }
+                                </td>
+
+                                <td>@item.Warehouse.WarehouseName</td>
+                                <td>@item.ReferenceCode</td>
+
+                                <td class="text-end fw-bold">
+                                    @item.Quantity.ToString("N3")
+                                </td>
+
+                                <td>@item.Note</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">
+                                Chưa có lịch sử giao dịch.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

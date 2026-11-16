@@ -1,0 +1,272 @@
+﻿@model web.ViewModels.AnalyticsViewModel
+
+@{
+    ViewData["Title"] = "Phân tích kinh doanh";
+
+    var maxRevenue = Model.DailyRevenue.Any()
+        ? Model.DailyRevenue.Max(x => x.Revenue)
+        : 0;
+
+    var maxProductQuantity = Model.TopProducts.Any()
+        ? Model.TopProducts.Max(x => x.QuantitySold)
+        : 0;
+}
+
+<div class="container-fluid py-3">
+
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1">Phân tích kinh doanh</h3>
+        <div class="text-muted">
+            Theo dõi doanh thu, đơn hàng và hiệu quả bán hàng
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date"
+                           name="fromDate"
+                           value="@Model.FromDate.ToString("yyyy-MM-dd")"
+                           class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date"
+                           name="toDate"
+                           value="@Model.ToDate.ToString("yyyy-MM-dd")"
+                           class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i> Lọc dữ liệu
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        30 ngày gần đây
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Tổng doanh thu</div>
+                    <h3 class="fw-bold text-success">
+                        @Model.TotalRevenue.ToString("N0") đ
+                    </h3>
+                    <small class="text-muted">Đơn hàng hoàn thành</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Đơn hàng hoàn thành</div>
+                    <h3 class="fw-bold">@Model.TotalOrders</h3>
+                    <small class="text-muted">Trong khoảng thời gian chọn</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Khách hàng đã mua</div>
+                    <h3 class="fw-bold">@Model.TotalCustomers</h3>
+                    <small class="text-muted">Khách hàng không trùng lặp</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted">Giá trị đơn trung bình</div>
+                    <h3 class="fw-bold">
+                        @Model.AverageOrderValue.ToString("N0") đ
+                    </h3>
+                    <small class="text-muted">Doanh thu / số đơn</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DOANH THU THEO NGÀY -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Doanh thu theo ngày</h5>
+        </div>
+
+        <div class="card-body">
+            @if (Model.DailyRevenue.Any())
+            {
+                foreach (var item in Model.DailyRevenue)
+                {
+                    var width = maxRevenue > 0
+                        ? (double)(item.Revenue / maxRevenue * 100)
+                        : 0;
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>@item.Date.ToString("dd/MM/yyyy")</span>
+                            <span class="fw-semibold">
+                                @item.Revenue.ToString("N0") đ
+                                <small class="text-muted">
+                                    (@item.OrderCount đơn)
+                                </small>
+                            </span>
+                        </div>
+
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar"
+                                 role="progressbar"
+                                 style="width: @width.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%">
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    Không có dữ liệu doanh thu trong khoảng thời gian này.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- TOP PRODUCTS -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Top 10 sản phẩm bán chạy</h5>
+                </div>
+
+                <div class="card-body table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-end">Số lượng</th>
+                                <th class="text-end">Doanh thu</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (Model.TopProducts.Any())
+                            {
+                                foreach (var item in Model.TopProducts)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @item.ProductName
+                                            </div>
+                                            <small class="text-muted">
+                                                @item.ProductCode
+                                            </small>
+                                        </td>
+
+                                        <td class="text-end">
+                                            @item.QuantitySold.ToString("N2")
+                                        </td>
+
+                                        <td class="text-end fw-semibold">
+                                            @item.Revenue.ToString("N0") đ
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3"
+                                        class="text-center text-muted py-3">
+                                        Chưa có dữ liệu sản phẩm.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- STORE REVENUE -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Doanh thu theo cửa hàng</h5>
+                </div>
+
+                <div class="card-body table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Cửa hàng</th>
+                                <th class="text-center">Đơn</th>
+                                <th class="text-end">Doanh thu</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (Model.StoreRevenues.Any())
+                            {
+                                foreach (var item in Model.StoreRevenues)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @item.StoreName
+                                            </div>
+                                            <small class="text-muted">
+                                                @item.StoreCode
+                                            </small>
+                                        </td>
+
+                                        <td class="text-center">
+                                            @item.OrderCount
+                                        </td>
+
+                                        <td class="text-end">
+                                            @item.Revenue.ToString("N0") đ
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3"
+                                        class="text-center text-muted py-3">
+                                        Chưa có dữ liệu cửa hàng.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

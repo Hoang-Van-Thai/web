@@ -1,0 +1,206 @@
+﻿@model web.ViewModels.ModelTrainingViewModel
+
+@{
+    ViewData["Title"] = "Quản lý Model";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>Quản lý Model</h3>
+            <p class="text-muted mb-0">Quản lý các phiên bản mô hình dự báo</p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Đăng ký Model
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Tổng số Model</div>
+                    <h3>@Model.TotalModels</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Model đang hoạt động</div>
+                    <h3 class="text-success">@Model.ActiveModels</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted">Lịch sử huấn luyện</div>
+                    <h3>@Model.TotalTrainingRuns</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Danh sách Model</h5>
+        </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Phiên bản</th>
+                        <th>Tên Model</th>
+                        <th>Framework</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Lịch sử</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Models.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                Chưa có Model nào.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var item in Model.Models)
+                    {
+                        <tr>
+                            <td><strong>@item.VersionName</strong></td>
+                            <td>@item.ModelName</td>
+                            <td>@item.Framework</td>
+                            <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@item.TrainingRunCount</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">Đang sử dụng</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Không hoạt động</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!item.IsActive)
+                                {
+                                    <form asp-action="Activate" method="post"
+                                          onsubmit="return confirm('Bạn muốn kích hoạt Model này?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id"
+                                               value="@item.ModelVersionId" />
+
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            Kích hoạt
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-success">Model hiện tại</span>
+                                }
+                            </td>
+                        </tr>
+
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <tr>
+                                <td colspan="7" class="text-muted small">
+                                    Mô tả: @item.Description
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Lịch sử huấn luyện</h5>
+        </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Tên phiên</th>
+                        <th>Model</th>
+                        <th>Trạng thái</th>
+                        <th>MAE</th>
+                        <th>RMSE</th>
+                        <th>RMSSE</th>
+                        <th>Thời gian</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.TrainingRuns.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">
+                                Chưa có lịch sử huấn luyện.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var run in Model.TrainingRuns)
+                    {
+                        <tr>
+                            <td>@run.TrainingName</td>
+                            <td>@(run.VersionName ?? "Không xác định")</td>
+                            <td>
+                                @if (run.Status == "Completed")
+                                {
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                }
+                                else if (run.Status == "Failed")
+                                {
+                                    <span class="badge bg-danger">Thất bại</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@run.Status</span>
+                                }
+                            </td>
+                            <td>@(run.Mae?.ToString("N4") ?? "-")</td>
+                            <td>@(run.Rmse?.ToString("N4") ?? "-")</td>
+                            <td>@(run.Rmsse?.ToString("N4") ?? "-")</td>
+                            <td>@(run.CompletedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td>
+                                <a asp-action="TrainingRunDetails"
+                                   asp-route-id="@run.TrainingRunId"
+                                   class="btn btn-sm btn-outline-info">
+                                    Chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
