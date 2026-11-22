@@ -1,19 +1,24 @@
-﻿using web.ViewModels;
+﻿namespace web.Services;
 
-namespace web.Services
+public interface IForecastService
 {
-    public interface IForecastService
-    {
-        Task<ForecastIndexViewModel> GetIndexAsync();
+    Task<List<ForecastOption>> GetProductsAsync(
+        CancellationToken cancellationToken = default);
 
-        Task<ForecastCreateViewModel> GetCreateViewModelAsync();
+    Task<List<ForecastOption>> GetStoresAsync(
+        CancellationToken cancellationToken = default);
 
-        Task<long> CreateForecastAsync(
-            ForecastCreateViewModel model,
-            int? userId,
-            CancellationToken cancellationToken = default
-        );
+    Task<ForecastApiHealthResponse> CheckApiAsync(
+        CancellationToken cancellationToken = default);
 
-        Task<ForecastDetailViewModel?> GetDetailsAsync(long id);
-    }
+    Task<ForecastExecutionResult> RunForecastAsync(
+        int productId,
+        int storeId,
+        int days,
+        int? userId,
+        CancellationToken cancellationToken = default);
+
+    Task<ForecastExecutionResult?> GetForecastDetailsAsync(
+        long forecastRunId,
+        CancellationToken cancellationToken = default);
 }

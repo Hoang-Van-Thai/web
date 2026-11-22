@@ -1,181 +1,300 @@
-﻿@model web.ViewModels.ForecastDetailViewModel
-@using System.Text.Json
+﻿@model web.Services.ForecastExecutionResult
 
 @{
     ViewData["Title"] = "Chi tiết dự báo";
-
-    var chartData = Model.Details
-        .GroupBy(x => x.ForecastDate)
-        .OrderBy(x => x.Key)
-        .Select(x => new
-        {
-            Date = x.Key.ToString("dd/MM"),
-            Quantity = x.Sum(y => y.PredictedQuantity)
-        })
-        .ToList();
-
-    var labelsJson = JsonSerializer.Serialize(
-        chartData.Select(x => x.Date)
-    );
-
-    var valuesJson = JsonSerializer.Serialize(
-        chartData.Select(x => x.Quantity)
-    );
 }
 
-<div class="container-fluid py-3">
+<div class="container-fluid py-4">
+
+    <!-- Tiêu đề -->
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
-            <h3>Chi tiết dự báo</h3>
-            <p class="text-muted mb-0">@Model.ForecastName</p>
+            <h2 class="fw-bold mb-1">
+                Kết quả dự báo
+            </h2>
+
+            <p class="text-muted mb-0">
+                Phiên dự báo #@Model.ForecastRunId
+            </p>
         </div>
 
-        <a asp-action="Index" class="btn btn-secondary">
+        <a asp-controller="Forecast"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+
             Quay lại
+
         </a>
+
     </div>
 
-    @if (Model.Status == "Completed")
+    @if (TempData["SuccessMessage"] != null)
     {
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted">Model</div>
-                        <h5>@Model.ModelVersionName</h5>
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <!-- Thông tin dự báo -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Sản phẩm
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.ProductName
                     </div>
+
                 </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Cửa hàng
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.StoreName
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Model
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.ActiveModel
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Thời gian dự báo
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.ForecastDays ngày
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Lịch sử sử dụng
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.HistoryDays ngày
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Ngày cuối lịch sử
+                    </small>
+
+                    <div class="fw-semibold">
+                        @Model.LastHistoryDate.ToString("dd/MM/yyyy")
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted">Cửa hàng</div>
-                        <h5>@Model.StoreName</h5>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted">Thời gian dự báo</div>
-                        <h5>@Model.HorizonDays ngày</h5>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted">Tổng số lượng dự báo</div>
-                        <h5 class="text-primary">
-                            @Model.TotalPredictedQuantity.ToString("N2")
-                        </h5>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Biểu đồ nhu cầu dự báo</h5>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Tổng dự báo
+                    </small>
+
+                    <h3 class="fw-bold text-primary">
+                        @Model.Statistics.Total.ToString("N2")
+                    </h3>
+
+                </div>
+
             </div>
 
-            <div class="card-body">
-                <canvas id="forecastChart" height="100"></canvas>
-            </div>
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Chi tiết dự báo theo sản phẩm</h5>
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Trung bình/ngày
+                    </small>
+
+                    <h3 class="fw-bold">
+                        @Model.Statistics.Mean.ToString("N2")
+                    </h3>
+
+                </div>
+
             </div>
 
-            <div class="card-body table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Mã sản phẩm</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Đơn vị</th>
-                            <th>Ngày dự báo</th>
-                            <th>Số lượng dự báo</th>
-                            <th>Số lượng thực tế</th>
-                        </tr>
-                    </thead>
+        </div>
 
-                    <tbody>
-                        @foreach (var item in Model.Details)
-                        {
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Thấp nhất
+                    </small>
+
+                    <h3 class="fw-bold text-warning">
+                        @Model.Statistics.Minimum.ToString("N2")
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Cao nhất
+                    </small>
+
+                    <h3 class="fw-bold text-success">
+                        @Model.Statistics.Maximum.ToString("N2")
+                    </h3>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bảng dự báo -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <h5 class="mb-0">
+                Dự báo theo ngày
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Forecast.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    Không có dữ liệu dự báo.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
                             <tr>
-                                <td>@item.ProductCode</td>
-                                <td>@item.ProductName</td>
-                                <td>@item.Unit</td>
-                                <td>@item.ForecastDate.ToString("dd/MM/yyyy")</td>
-                                <td class="fw-bold text-primary">
-                                    @item.PredictedQuantity.ToString("N2")
-                                </td>
-                                <td>
-                                    @(item.ActualQuantity?.ToString("N2") ?? "-")
-                                </td>
+                                <th>STT</th>
+                                <th>Ngày</th>
+                                <th class="text-end">
+                                    Số lượng dự báo
+                                </th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+
+                        </thead>
+
+                        <tbody>
+
+                            @{
+                                var index = 1;
+                            }
+
+                            @foreach (var item in Model.Forecast)
+                            {
+                                <tr>
+
+                                    <td>
+                                        @index
+                                    </td>
+
+                                    <td>
+                                        @DateTime.Parse(item.Date).ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <td class="text-end fw-semibold">
+                                        @item.Prediction.ToString("N2")
+                                    </td>
+
+                                </tr>
+
+                                index++;
+                            }
+
+                        </tbody>
+
+                        <tfoot class="table-light">
+
+                            <tr>
+
+                                <th colspan="2">
+                                    Tổng dự báo
+                                </th>
+
+                                <th class="text-end">
+                                    @Model.Statistics.Total.ToString("N2")
+                                </th>
+
+                            </tr>
+
+                        </tfoot>
+
+                    </table>
+
+                </div>
+            }
+
         </div>
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            Phiên dự báo hiện có trạng thái: <strong>@Model.Status</strong>.
-            Chưa có kết quả dự báo hoàn chỉnh.
-        </div>
-    }
+
+    </div>
+
 </div>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-        const labels = @Html.Raw(labelsJson);
-        const values = @Html.Raw(valuesJson);
-
-        const canvas = document.getElementById('forecastChart');
-
-        if (canvas && labels.length > 0) {
-            new Chart(canvas, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Số lượng dự báo',
-                        data: values,
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Số lượng'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Ngày'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    </script>
-}

@@ -1,115 +1,116 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace web.ViewModels
+namespace web.ViewModels;
+
+public class ModelTrainingViewModel
 {
-    public class ModelTrainingViewModel
-    {
-        public List<ModelVersionItemViewModel> Models { get; set; } = new();
+    public List<ModelVersionItemViewModel> Models { get; set; } = new();
+    public List<ModelTrainingRunItemViewModel> TrainingRuns { get; set; } = new();
+    public List<SelectListItem> Stores { get; set; } = new();
 
-        public List<ModelTrainingRunItemViewModel> TrainingRuns { get; set; } = new();
+    public int TotalModels { get; set; }
+    public int ActiveModels { get; set; }
+    public int TotalTrainingRuns { get; set; }
 
-        public int TotalModels { get; set; }
-        public int ActiveModels { get; set; }
-        public int TotalTrainingRuns { get; set; }
-    }
+    public bool ApiAvailable { get; set; }
+    public string? ActivePythonModel { get; set; }
+    public string? ApiError { get; set; }
 
-    public class ModelVersionItemViewModel
-    {
-        public int ModelVersionId { get; set; }
+    public RetrainStatusViewModel RetrainStatus { get; set; } = new();
+}
 
-        public string VersionName { get; set; } = string.Empty;
+public class StoreTrainingPreviewViewModel
+{
+    public int StoreId { get; set; }
+    public string StoreName { get; set; } = string.Empty;
 
-        public string ModelName { get; set; } = string.Empty;
+    public int TotalProducts { get; set; }
+    public int EligibleProducts { get; set; }
+    public int IneligibleProducts => TotalProducts - EligibleProducts;
 
-        public string ModelFilePath { get; set; } = string.Empty;
+    public int TotalRecords { get; set; }
 
-        public string Framework { get; set; } = string.Empty;
+    public DateOnly? DataStartDate { get; set; }
+    public DateOnly? DataEndDate { get; set; }
 
-        public bool IsActive { get; set; }
+    public List<StoreTrainingProductViewModel> Products { get; set; } = new();
+}
 
-        public DateTime CreatedAt { get; set; }
+public class StoreTrainingProductViewModel
+{
+    public int ProductId { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+    public DateOnly FirstSaleDate { get; set; }
+    public DateOnly LastSaleDate { get; set; }
 
-        public int TrainingRunCount { get; set; }
-    }
+    // Số ngày lịch từ lần bán đầu tiên đến ngày cuối cùng
+    public int CalendarDays { get; set; }
 
-    public class ModelTrainingRunItemViewModel
-    {
-        public long TrainingRunId { get; set; }
+    public bool IsEligible => CalendarDays >= 100;
+}
 
-        public string? TrainingName { get; set; }
+public class ModelVersionItemViewModel
+{
+    public int ModelVersionId { get; set; }
+    public string VersionName { get; set; } = string.Empty;
+    public string ModelName { get; set; } = string.Empty;
+    public string ModelFilePath { get; set; } = string.Empty;
+    public string Framework { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? Description { get; set; }
+    public int TrainingRunCount { get; set; }
+    public decimal? Mae { get; set; }
+    public decimal? Rmse { get; set; }
+}
 
-        public string Status { get; set; } = string.Empty;
+public class ModelTrainingRunItemViewModel
+{
+    public long TrainingRunId { get; set; }
+    public string? TrainingName { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? VersionName { get; set; }
 
-        public string? VersionName { get; set; }
+    public DateOnly? DataStartDate { get; set; }
+    public DateOnly? DataEndDate { get; set; }
 
-        public DateOnly? DataStartDate { get; set; }
+    public DateTime? StartedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
 
-        public DateOnly? DataEndDate { get; set; }
+    public decimal? Mae { get; set; }
+    public decimal? Rmse { get; set; }
+    public decimal? Rmsse { get; set; }
 
-        public DateTime? StartedAt { get; set; }
+    public string? LogMessage { get; set; }
+}
 
-        public DateTime? CompletedAt { get; set; }
+public class RetrainStatusViewModel
+{
+    public string Status { get; set; } = "idle";
+    public string? Message { get; set; }
+    public int Progress { get; set; }
+    public string? Error { get; set; }
+    public string? ActiveModel { get; set; }
+    public string? Winner { get; set; }
 
-        public decimal? Mae { get; set; }
+    public double? OldRmse { get; set; }
+    public double? NewRmse { get; set; }
+    public double? OldMae { get; set; }
+    public double? NewMae { get; set; }
 
-        public decimal? Rmse { get; set; }
+    public double? RmseImprovementPercent { get; set; }
+    public double? MaeImprovementPercent { get; set; }
 
-        public decimal? Rmsse { get; set; }
+    public int TrainingRows { get; set; }
+    public int ValidationRows { get; set; }
+    public int Products { get; set; }
+}
 
-        public string? LogMessage { get; set; }
-    }
-
-    public class ModelVersionCreateViewModel
-    {
-        [Required(ErrorMessage = "Vui lòng nhập tên phiên bản.")]
-        [StringLength(50)]
-        [Display(Name = "Tên phiên bản")]
-        public string VersionName { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Vui lòng nhập tên model.")]
-        [StringLength(100)]
-        [Display(Name = "Tên model")]
-        public string ModelName { get; set; } = "Global LightGBM";
-
-        [Required(ErrorMessage = "Vui lòng nhập đường dẫn model.")]
-        [StringLength(500)]
-        [Display(Name = "Đường dẫn model")]
-        public string ModelFilePath { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Vui lòng nhập framework.")]
-        [StringLength(50)]
-        [Display(Name = "Framework")]
-        public string Framework { get; set; } = "LightGBM";
-
-        [StringLength(1000)]
-        [Display(Name = "Mô tả")]
-        public string? Description { get; set; }
-
-        [Display(Name = "Tên phiên huấn luyện")]
-        [StringLength(150)]
-        public string? TrainingName { get; set; }
-
-        [Display(Name = "Ngày bắt đầu dữ liệu")]
-        public DateOnly? DataStartDate { get; set; }
-
-        [Display(Name = "Ngày kết thúc dữ liệu")]
-        public DateOnly? DataEndDate { get; set; }
-
-        [Display(Name = "MAE")]
-        [Range(0, double.MaxValue)]
-        public decimal? Mae { get; set; }
-
-        [Display(Name = "RMSE")]
-        [Range(0, double.MaxValue)]
-        public decimal? Rmse { get; set; }
-
-        [Display(Name = "RMSSE")]
-        [Range(0, double.MaxValue)]
-        public decimal? Rmsse { get; set; }
-
-        [Display(Name = "Thông tin huấn luyện")]
-        public string? LogMessage { get; set; }
-    }
+public class TrainingStoreOption
+{
+    public int StoreId { get; set; }
+    public string StoreName { get; set; } = string.Empty;
 }

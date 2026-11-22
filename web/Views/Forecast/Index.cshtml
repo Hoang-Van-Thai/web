@@ -1,109 +1,211 @@
-﻿@model web.ViewModels.ForecastIndexViewModel
+﻿@model web.ViewModels.ForecastViewModel
 
 @{
     ViewData["Title"] = "Dự báo nhu cầu";
 }
 
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3>Dự báo nhu cầu sản phẩm</h3>
-            <p class="text-muted mb-0">
-                Sử dụng mô hình Machine Learning để dự báo nhu cầu bán hàng.
-            </p>
-        </div>
+<div class="container-fluid py-4">
 
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-graph-up"></i> Tạo dự báo mới
-        </a>
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">
+            Dự báo nhu cầu sản phẩm
+        </h2>
+
+        <p class="text-muted mb-0">
+            Sử dụng mô hình LightGBM để dự báo số lượng bán hàng.
+        </p>
     </div>
 
-    @if (TempData["Success"] != null)
+    @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success">@TempData["Success"]</div>
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
     }
 
-    @if (TempData["Error"] != null)
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
-        <div class="alert alert-danger">@TempData["Error"]</div>
+        <div class="alert alert-danger">
+            @Model.ErrorMessage
+        </div>
     }
 
-    <div class="card shadow-sm">
+    <!-- Trạng thái API -->
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-body d-flex justify-content-between align-items-center">
+
+            <div>
+                <h5 class="mb-2">
+                    Trạng thái Python API
+                </h5>
+
+                @if (Model.ApiAvailable)
+                {
+                    <span class="badge bg-success">
+                        Đang hoạt động
+                    </span>
+
+                    <span class="text-muted ms-2">
+                        Model: @Model.ActiveModel
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">
+                        Chưa kết nối hoặc model chưa sẵn sàng
+                    </span>
+                }
+            </div>
+
+            <a asp-controller="Forecast"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Kiểm tra lại
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Form dự báo -->
+    <div class="card shadow-sm border-0">
+
         <div class="card-header bg-white">
-            <h5 class="mb-0">Lịch sử dự báo</h5>
+            <h5 class="mb-0">
+                Thiết lập dự báo
+            </h5>
         </div>
 
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Mã dự báo</th>
-                        <th>Tên phiên</th>
-                        <th>Model</th>
-                        <th>Cửa hàng</th>
-                        <th>Ngày bắt đầu</th>
-                        <th>Ngày kết thúc</th>
-                        <th>Số ngày</th>
-                        <th>Sản phẩm</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tạo</th>
-                        <th></th>
-                    </tr>
-                </thead>
+        <div class="card-body">
 
-                <tbody>
-                    @if (!Model.ForecastRuns.Any())
-                    {
-                        <tr>
-                            <td colspan="11" class="text-center text-muted py-4">
-                                Chưa có phiên dự báo nào.
-                            </td>
-                        </tr>
-                    }
+            <form asp-controller="Forecast"
+                  asp-action="Run"
+                  method="post">
 
-                    @foreach (var item in Model.ForecastRuns)
-                    {
-                        <tr>
-                            <td>#@item.ForecastRunId</td>
-                            <td>@item.ForecastName</td>
-                            <td>@item.ModelVersionName</td>
-                            <td>
-                                @(string.IsNullOrWhiteSpace(item.StoreNames)
-                                    ? "-"
-                                    : item.StoreNames)
-                            </td>
-                            <td>@item.StartDate.ToString("dd/MM/yyyy")</td>
-                            <td>@item.EndDate.ToString("dd/MM/yyyy")</td>
-                            <td>@item.HorizonDays ngày</td>
-                            <td>@item.ProductCount</td>
-                            <td>
-                                @if (item.Status == "Completed")
-                                {
-                                    <span class="badge bg-success">Hoàn thành</span>
-                                }
-                                else if (item.Status == "Failed")
-                                {
-                                    <span class="badge bg-danger">Thất bại</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">
-                                        @item.Status
-                                    </span>
-                                }
-                            </td>
-                            <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>
-                                <a asp-action="Details"
-                                   asp-route-id="@item.ForecastRunId"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Chi tiết
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="row g-3">
+
+                    <!-- Sản phẩm -->
+                    <div class="col-md-6">
+
+                        <label asp-for="ProductId"
+                               class="form-label">
+                            Sản phẩm
+                        </label>
+
+                        <select asp-for="ProductId"
+                                asp-items="Model.Products"
+                                class="form-select">
+
+                            <option value="0">
+                                -- Chọn sản phẩm --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="ProductId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <!-- Cửa hàng -->
+                    <div class="col-md-6">
+
+                        <label asp-for="StoreId"
+                               class="form-label">
+                            Cửa hàng
+                        </label>
+
+                        <select asp-for="StoreId"
+                                asp-items="Model.Stores"
+                                class="form-select">
+
+                            <option value="0">
+                                -- Chọn cửa hàng --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="StoreId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <!-- Số ngày dự báo -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Days"
+                               class="form-label">
+                            Thời gian dự báo
+                        </label>
+
+                        <select asp-for="Days"
+                                class="form-select">
+
+                            <option value="7">
+                                7 ngày
+                            </option>
+
+                            <option value="14">
+                                14 ngày
+                            </option>
+
+                            <option value="28">
+                                28 ngày
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Days"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="alert alert-info mt-4 mb-3">
+
+                    <strong>Lưu ý:</strong>
+
+                    Hệ thống cần tối thiểu 63 ngày lịch sử bán hàng
+                    của đúng sản phẩm tại cửa hàng được chọn.
+
+                    Ngày không có dữ liệu bán hàng sẽ được gửi sang
+                    API với số lượng bằng 0.
+
+                </div>
+
+                <div class="text-end">
+
+                    <button type="submit"
+                            class="btn btn-primary px-4"
+                            disabled="@(!Model.ApiAvailable)">
+
+                        <i class="bi bi-graph-up-arrow me-1"></i>
+
+                        Thực hiện dự báo
+
+                    </button>
+
+                </div>
+
+            </form>
+
         </div>
+
     </div>
+
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

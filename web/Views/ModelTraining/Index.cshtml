@@ -1,206 +1,1036 @@
 ﻿@model web.ViewModels.ModelTrainingViewModel
 
 @{
-    ViewData["Title"] = "Quản lý Model";
+    ViewData["Title"] = "Huấn luyện mô hình";
 }
 
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3>Quản lý Model</h3>
-            <p class="text-muted mb-0">Quản lý các phiên bản mô hình dự báo</p>
-        </div>
+<div class="container-fluid py-4">
 
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Đăng ký Model
-        </a>
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Huấn luyện mô hình</h2>
+        <p class="text-muted mb-0">
+            Quản lý phiên bản LightGBM và retrain bằng dữ liệu bán hàng.
+        </p>
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">@TempData["Success"]</div>
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">@TempData["Error"]</div>
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
     }
 
+    @if (!Model.ApiAvailable)
+    {
+        <div class="alert alert-danger">
+            <strong>Python API chưa sẵn sàng.</strong>
+            <div>
+                @(Model.ApiError ?? "Không kết nối được API hoặc model chưa được load.")
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Python API đang hoạt động.</strong>
+                <div>
+                    Model đang sử dụng:
+                    <strong>@(Model.ActivePythonModel ?? "Chưa xác định")</strong>
+                </div>
+            </div>
+            <span class="badge bg-success">Healthy</span>
+        </div>
+    }
+
+    <!-- STATISTICS -->
+
     <div class="row g-3 mb-4">
+
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted">Tổng số Model</div>
-                    <h3>@Model.TotalModels</h3>
+                    <div class="text-muted">Tổng số phiên bản model</div>
+                    <h3 class="fw-bold mb-0">@Model.TotalModels</h3>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted">Model đang hoạt động</div>
-                    <h3 class="text-success">@Model.ActiveModels</h3>
+                    <div class="text-muted">Model ACTIVE trong SQL</div>
+                    <h3 class="fw-bold mb-0">@Model.ActiveModels</h3>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted">Lịch sử huấn luyện</div>
-                    <h3>@Model.TotalTrainingRuns</h3>
+                    <div class="text-muted">Tổng số phiên huấn luyện</div>
+                    <h3 class="fw-bold mb-0">@Model.TotalTrainingRuns</h3>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Danh sách Model</h5>
+    <!-- TRAINING DATA -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Thiết lập dữ liệu huấn luyện</h5>
         </div>
 
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Phiên bản</th>
-                        <th>Tên Model</th>
-                        <th>Framework</th>
-                        <th>Ngày đăng ký</th>
-                        <th>Lịch sử</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
+        <div class="card-body">
 
-                <tbody>
-                    @if (!Model.Models.Any())
-                    {
+            <ul class="nav nav-tabs mb-4" role="tablist">
+
+                <li class="nav-item">
+                    <button class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#sql-source"
+                            type="button">
+                        <i class="bi bi-database me-1"></i>
+                        Lấy từ SQL Server
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#csv-source"
+                            type="button">
+                        <i class="bi bi-filetype-csv me-1"></i>
+                        Tải file CSV
+                    </button>
+                </li>
+
+            </ul>
+
+            <div class="tab-content">
+
+                <!-- SQL TAB -->
+
+                <div class="tab-pane fade show active" id="sql-source">
+
+                    <form asp-action="TrainFromSql"
+                          method="post"
+                          id="sqlTrainingForm">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Chọn cửa hàng
+                            </label>
+
+                            <select id="storeId"
+                                    name="storeId"
+                                    class="form-select"
+                                    required>
+
+                                <option value="">
+                                    -- Chọn cửa hàng --
+                                </option>
+
+                                @foreach (var store in Model.Stores)
+                                {
+                                    <option value="@store.Value">
+                                        @store.Text
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+                        <!-- LOADING -->
+
+                        <div id="previewLoading"
+                             class="alert alert-info d-none">
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Đang lấy dữ liệu từ SQL Server...
+                        </div>
+
+                        <!-- ERROR -->
+
+                        <div id="previewError"
+                             class="alert alert-danger d-none"></div>
+
+                        <!-- PREVIEW -->
+
+                        <div id="previewContent" class="d-none">
+
+                            <div class="row g-3 mb-4">
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted">
+                                                Tổng sản phẩm
+                                            </div>
+                                            <h3 id="totalProducts"
+                                                class="fw-bold mb-0">
+                                                0
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted">
+                                                Đủ điều kiện retrain
+                                            </div>
+                                            <h3 id="eligibleProducts"
+                                                class="fw-bold text-success mb-0">
+                                                0
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted">
+                                                Tổng bản ghi
+                                            </div>
+                                            <h3 id="totalRecords"
+                                                class="fw-bold mb-0">
+                                                0
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card bg-light border-0 h-100">
+                                        <div class="card-body">
+                                            <div class="text-muted">
+                                                Chưa đủ điều kiện
+                                            </div>
+                                            <h3 id="ineligibleProducts"
+                                                class="fw-bold text-danger mb-0">
+                                                0
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="alert alert-info">
+                                <div class="fw-semibold mb-1">
+                                    Khoảng dữ liệu hiện có
+                                </div>
+
+                                <span id="dataDateRange">
+                                    —
+                                </span>
+
+                                <div class="small mt-1">
+                                    Khoảng ngày được lấy tự động từ
+                                    SalesDaily của cửa hàng đã chọn.
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-3">
+                                Danh sách sản phẩm
+                            </h6>
+
+                            <div class="table-responsive mb-4"
+                                 style="max-height: 450px; overflow-y: auto;">
+
+                                <table class="table table-bordered table-hover align-middle">
+
+                                    <thead class="table-light"
+                                           style="position: sticky; top: 0; z-index: 1;">
+                                        <tr>
+                                            <th>Mã SP</th>
+                                            <th>Tên sản phẩm</th>
+                                            <th>Ngày bắt đầu</th>
+                                            <th>Ngày kết thúc</th>
+                                            <th>Số ngày lịch</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="productTableBody">
+                                        <tr>
+                                            <td colspan="6"
+                                                class="text-center text-muted">
+                                                Chưa có dữ liệu.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <strong>Lưu ý:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>
+                                        Dữ liệu được lấy từ bảng SalesDaily.
+                                    </li>
+                                    <li>
+                                        Sản phẩm phải có tối thiểu 100 ngày lịch
+                                        từ ngày bán đầu tiên đến ngày bán cuối cùng.
+                                    </li>
+                                    <li>
+                                        Sản phẩm chưa đủ 100 ngày sẽ không được đưa
+                                        vào dữ liệu retrain.
+                                    </li>
+                                    <li>
+                                        Những ngày không có giao dịch sẽ được điền
+                                        quantity = 0.
+                                    </li>
+                                    <li>
+                                        Giá bán lấy từ Revenue / Quantity,
+                                        AverageSellingPrice hoặc SellingPrice.
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <button type="submit"
+                                    id="btnTrainSql"
+                                    class="btn btn-primary"
+                                    disabled="@(!Model.ApiAvailable)">
+
+                                <i class="bi bi-database-check me-1"></i>
+                                Retrain từ dữ liệu cửa hàng
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                    <div id="previewEmpty"
+                         class="text-center text-muted py-5">
+                        <i class="bi bi-database fs-1 d-block mb-2"></i>
+                        Vui lòng chọn cửa hàng để xem dữ liệu huấn luyện.
+                    </div>
+
+                </div>
+
+                <!-- CSV TAB -->
+
+                <div class="tab-pane fade" id="csv-source">
+
+                    <div class="card border mb-4">
+
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                                <div>
+                                    <h6 class="fw-bold mb-1">
+                                        example.csv
+                                    </h6>
+
+                                    <div class="text-muted small">
+                                        File mẫu định dạng dữ liệu huấn luyện.
+                                    </div>
+
+                                    <span class="badge bg-secondary mt-2">
+                                        CSV
+                                    </span>
+                                </div>
+
+                                <a asp-action="DownloadExampleCsv"
+                                   class="btn btn-outline-primary">
+
+                                    <i class="bi bi-download me-1"></i>
+                                    Tải file CSV mẫu
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="alert alert-info">
+
+                        <strong>Định dạng CSV bắt buộc:</strong>
+
+                        <div class="mt-2">
+                            <code>product_id,date,quantity,price</code>
+                        </div>
+
+                        <div class="table-responsive mt-3">
+
+                            <table class="table table-sm table-bordered bg-white mb-0">
+
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cột</th>
+                                        <th>Ý nghĩa</th>
+                                        <th>Ví dụ</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td>product_id</td>
+                                        <td>Mã sản phẩm</td>
+                                        <td>P001</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>date</td>
+                                        <td>Ngày bán, định dạng yyyy-MM-dd</td>
+                                        <td>2026-01-01</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>quantity</td>
+                                        <td>Số lượng bán</td>
+                                        <td>10</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>price</td>
+                                        <td>Giá bán</td>
+                                        <td>150000</td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <div class="small mt-2">
+                            Mỗi dòng tương ứng với một sản phẩm tại một ngày.
+                            Không thêm cột khác vào file mẫu.
+                        </div>
+
+                    </div>
+
+                    <form asp-action="UploadCsv"
+                          method="post"
+                          enctype="multipart/form-data">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Chọn file CSV để tải lên
+                            </label>
+
+                            <input type="file"
+                                   name="file"
+                                   class="form-control"
+                                   accept=".csv,text/csv"
+                                   required />
+
+                            <div class="form-text">
+                                Chỉ hỗ trợ CSV, dung lượng tối đa 100 MB.
+                            </div>
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary"
+                                disabled="@(!Model.ApiAvailable)">
+
+                            <i class="bi bi-cloud-upload me-1"></i>
+                            Upload CSV và Retrain
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RETRAIN STATUS -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Trạng thái huấn luyện</h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-2">
+                <strong id="trainingStatusText">
+                    @Model.RetrainStatus.Message
+                </strong>
+
+                <span id="trainingProgressText">
+                    @Model.RetrainStatus.Progress%
+                </span>
+            </div>
+
+            <div class="progress mb-3" style="height: 18px;">
+                <div id="trainingProgressBar"
+                     class="progress-bar progress-bar-striped"
+                     role="progressbar"
+                     style="width: @(Model.RetrainStatus.Progress)%">
+                    @Model.RetrainStatus.Progress%
+                </div>
+            </div>
+
+            <div id="trainingError"
+                 class="alert alert-danger d-none"></div>
+
+            <div id="trainingResult" class="d-none">
+
+                <hr />
+
+                <h6 class="fw-bold">Kết quả so sánh model</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Chỉ số</th>
+                                <th>Model cũ </th>
+                                <th>Model mới </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>RMSE</td>
+                                <td id="oldRmse">—</td>
+                                <td id="newRmse">—</td>
+                            </tr>
+
+                            <tr>
+                                <td>MAE</td>
+                                <td id="oldMae">—</td>
+                                <td id="newMae">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted">Model chiến thắng</div>
+                            <h5 id="winnerModel" class="fw-bold mb-0">—</h5>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted">Model ACTIVE</div>
+                            <h5 id="activeModel" class="fw-bold mb-0">—</h5>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted">Số sản phẩm</div>
+                            <h5 id="productsCount" class="fw-bold mb-0">—</h5>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODEL VERSIONS -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Danh sách phiên bản model</h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
                         <tr>
-                            <td colspan="7" class="text-center text-muted">
-                                Chưa có Model nào.
-                            </td>
+                            <th>Phiên bản</th>
+                            <th>Tên model</th>
+                            <th>Framework</th>
+                            <th>Ngày tạo</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
                         </tr>
-                    }
+                    </thead>
 
-                    @foreach (var item in Model.Models)
-                    {
-                        <tr>
-                            <td><strong>@item.VersionName</strong></td>
-                            <td>@item.ModelName</td>
-                            <td>@item.Framework</td>
-                            <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@item.TrainingRunCount</td>
-                            <td>
-                                @if (item.IsActive)
-                                {
-                                    <span class="badge bg-success">Đang sử dụng</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Không hoạt động</span>
-                                }
-                            </td>
-                            <td>
-                                @if (!item.IsActive)
-                                {
-                                    <form asp-action="Activate" method="post"
-                                          onsubmit="return confirm('Bạn muốn kích hoạt Model này?');">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id"
-                                               value="@item.ModelVersionId" />
+                    <tbody>
 
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                            Kích hoạt
-                                        </button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <span class="text-success">Model hiện tại</span>
-                                }
-                            </td>
-                        </tr>
-
-                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        @if (!Model.Models.Any())
                         {
                             <tr>
-                                <td colspan="7" class="text-muted small">
-                                    Mô tả: @item.Description
+                                <td colspan="6"
+                                    class="text-center text-muted">
+                                    Chưa có phiên bản model trong SQL.
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
+
+                        @foreach (var item in Model.Models)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    @item.VersionName
+                                </td>
+
+                                <td>@item.ModelName</td>
+                                <td>@item.Framework</td>
+
+                                <td>
+                                    @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">ACTIVE</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">INACTIVE</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!item.IsActive)
+                                    {
+                                        <form asp-action="Activate"
+                                              method="post"
+                                              class="d-inline">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@item.ModelVersionId" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    disabled="@(!Model.ApiAvailable)">
+                                                Kích hoạt
+                                            </button>
+
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">
+                                            Đang sử dụng
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            </div>
+
         </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Lịch sử huấn luyện</h5>
+    <!-- TRAINING HISTORY -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Lịch sử huấn luyện</h5>
         </div>
 
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Tên phiên</th>
-                        <th>Model</th>
-                        <th>Trạng thái</th>
-                        <th>MAE</th>
-                        <th>RMSE</th>
-                        <th>RMSSE</th>
-                        <th>Thời gian</th>
-                        <th></th>
-                    </tr>
-                </thead>
+        <div class="card-body">
 
-                <tbody>
-                    @if (!Model.TrainingRuns.Any())
-                    {
-                        <tr>
-                            <td colspan="8" class="text-center text-muted">
-                                Chưa có lịch sử huấn luyện.
-                            </td>
-                        </tr>
-                    }
+            <div class="table-responsive">
 
-                    @foreach (var run in Model.TrainingRuns)
-                    {
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
                         <tr>
-                            <td>@run.TrainingName</td>
-                            <td>@(run.VersionName ?? "Không xác định")</td>
-                            <td>
-                                @if (run.Status == "Completed")
-                                {
-                                    <span class="badge bg-success">Hoàn thành</span>
-                                }
-                                else if (run.Status == "Failed")
-                                {
-                                    <span class="badge bg-danger">Thất bại</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">@run.Status</span>
-                                }
-                            </td>
-                            <td>@(run.Mae?.ToString("N4") ?? "-")</td>
-                            <td>@(run.Rmse?.ToString("N4") ?? "-")</td>
-                            <td>@(run.Rmsse?.ToString("N4") ?? "-")</td>
-                            <td>@(run.CompletedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
-                            <td>
-                                <a asp-action="TrainingRunDetails"
-                                   asp-route-id="@run.TrainingRunId"
-                                   class="btn btn-sm btn-outline-info">
-                                    Chi tiết
-                                </a>
-                            </td>
+                            <th>Mã phiên</th>
+                            <th>Tên phiên</th>
+                            <th>Model</th>
+                            <th>Thời gian bắt đầu</th>
+                            <th>MAE</th>
+                            <th>RMSE</th>
+                            <th>Trạng thái</th>
+                            <th></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.TrainingRuns.Any())
+                        {
+                            <tr>
+                                <td colspan="8"
+                                    class="text-center text-muted">
+                                    Chưa có lịch sử huấn luyện.
+                                </td>
+                            </tr>
+                        }
+
+                        @foreach (var run in Model.TrainingRuns)
+                        {
+                            <tr>
+                                <td>#@run.TrainingRunId</td>
+
+                                <td>@run.TrainingName</td>
+
+                                <td>@(run.VersionName ?? "—")</td>
+
+                                <td>
+                                    @(run.StartedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")
+                                </td>
+
+                                <td>
+                                    @(run.Mae?.ToString("N4") ?? "—")
+                                </td>
+
+                                <td>
+                                    @(run.Rmse?.ToString("N4") ?? "—")
+                                </td>
+
+                                <td>
+                                    @if (run.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success">
+                                            Hoàn thành
+                                        </span>
+                                    }
+                                    else if (run.Status == "Training")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Đang huấn luyện
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            @run.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a asp-action="TrainingRunDetails"
+                                       asp-route-id="@run.TrainingRunId"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
+
     </div>
+
 </div>
+
+@section Scripts {
+
+    <script>
+        const storeSelect = document.getElementById("storeId");
+
+        const previewLoading = document.getElementById("previewLoading");
+        const previewError = document.getElementById("previewError");
+        const previewContent = document.getElementById("previewContent");
+        const previewEmpty = document.getElementById("previewEmpty");
+
+        const productTableBody = document.getElementById("productTableBody");
+        const btnTrainSql = document.getElementById("btnTrainSql");
+
+        const previewUrl = '@Url.Action("PreviewStore", "ModelTraining")';
+
+        function resetPreview() {
+            previewContent.classList.add("d-none");
+            previewError.classList.add("d-none");
+            previewEmpty.classList.remove("d-none");
+            btnTrainSql.disabled = true;
+        }
+
+        function formatNumber(value) {
+            return Number(value || 0).toLocaleString("vi-VN");
+        }
+
+        function formatDate(value) {
+            if (!value) return "—";
+
+            const parts = value.split("-");
+            if (parts.length !== 3) return value;
+
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        async function loadStorePreview(storeId) {
+            resetPreview();
+
+            if (!storeId) return;
+
+            previewEmpty.classList.add("d-none");
+            previewLoading.classList.remove("d-none");
+
+            try {
+                const response = await fetch(
+                    `${previewUrl}?storeId=${encodeURIComponent(storeId)}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Không thể tải dữ liệu cửa hàng.");
+                }
+
+                const data = result.data;
+
+                document.getElementById("totalProducts").textContent =
+                    formatNumber(data.totalProducts);
+
+                document.getElementById("eligibleProducts").textContent =
+                    formatNumber(data.eligibleProducts);
+
+                document.getElementById("ineligibleProducts").textContent =
+                    formatNumber(data.ineligibleProducts);
+
+                document.getElementById("totalRecords").textContent =
+                    formatNumber(data.totalRecords);
+
+                document.getElementById("dataDateRange").textContent =
+                    data.dataStartDate && data.dataEndDate
+                        ? `${formatDate(data.dataStartDate)} đến ${formatDate(data.dataEndDate)}`
+                        : "Không có dữ liệu";
+
+                productTableBody.innerHTML = "";
+
+                if (!data.products || data.products.length === 0) {
+                    productTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    Cửa hàng chưa có sản phẩm phát sinh bán hàng.
+                                </td>
+                            </tr>`;
+                } else {
+                    data.products.forEach(product => {
+                        const statusHtml = product.isEligible
+                            ? '<span class="badge bg-success">Đủ điều kiện</span>'
+                            : '<span class="badge bg-danger">Chưa đủ</span>';
+
+                        const row = document.createElement("tr");
+
+                        const values = [
+                            product.productCode,
+                            product.productName,
+                            formatDate(product.firstSaleDate),
+                            formatDate(product.lastSaleDate),
+                            formatNumber(product.calendarDays)
+                        ];
+
+                        values.forEach(value => {
+                            const cell = document.createElement("td");
+                            cell.textContent = value ?? "";
+                            row.appendChild(cell);
+                        });
+
+                        const statusCell = document.createElement("td");
+                        statusCell.innerHTML = statusHtml;
+                        row.appendChild(statusCell);
+
+                        productTableBody.appendChild(row);
+                    });
+                }
+
+                previewContent.classList.remove("d-none");
+
+                btnTrainSql.disabled =
+                    data.eligibleProducts <= 0 ||
+                        @(!Model.ApiAvailable ? "true" : "false");
+
+            } catch (error) {
+                previewError.textContent = error.message;
+                previewError.classList.remove("d-none");
+            } finally {
+                previewLoading.classList.add("d-none");
+            }
+        }
+
+        storeSelect.addEventListener("change", function () {
+            loadStorePreview(this.value);
+        });
+
+        // RETRAIN STATUS
+
+        async function refreshTrainingStatus() {
+            try {
+                const response = await fetch(
+                    '@Url.Action("Status", "ModelTraining")'
+                );
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                const statusText = document.getElementById("trainingStatusText");
+                const progressText = document.getElementById("trainingProgressText");
+                const progressBar = document.getElementById("trainingProgressBar");
+                const errorBox = document.getElementById("trainingError");
+
+                statusText.textContent = data.message || data.status || "Chưa có thông tin";
+
+                const progress = Math.max(
+                    0,
+                    Math.min(100, Number(data.progress || 0))
+                );
+
+                progressText.textContent = `${progress}%`;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}%`;
+
+                // if (data.status === "completed") {
+                //     progressBar.classList.remove("progress-bar-animated");
+                //     progressBar.classList.add("bg-success");
+                // }
+
+                // if (data.status === "failed" || data.status === "unavailable") {
+                //     errorBox.textContent = data.error || data.message || "Có lỗi xảy ra.";
+                //     errorBox.classList.remove("d-none");
+                // }
+
+                // if (data.status === "completed" && data.comparison) {
+                //     const comparison = data.comparison;
+
+                //     document.getElementById("oldRmse").textContent =
+                //         comparison.oldRmse ?? "—";
+
+                //     document.getElementById("newRmse").textContent =
+                //         comparison.newRmse ?? "—";
+
+                //     document.getElementById("oldMae").textContent =
+                //         comparison.oldMae ?? "—";
+
+                //     document.getElementById("newMae").textContent =
+                //         comparison.newMae ?? "—";
+
+                //     document.getElementById("winnerModel").textContent =
+                //         data.winner ?? "—";
+
+                //     document.getElementById("activeModel").textContent =
+                //         data.activeModel ?? "—";
+
+                //     document.getElementById("productsCount").textContent =
+                //         data.products ?? "—";
+
+                //     document.getElementById("trainingResult").classList.remove("d-none");
+                // }
+                if (data.status === "completed") {
+
+                    // Hỗ trợ cả trường hợp comparison nằm trong metrics
+                    // và trường hợp comparison nằm trực tiếp ở cấp ngoài.
+                    const comparison =
+                        data.metrics?.comparison ??
+                        data.comparison ??
+                        {};
+
+                    // Lấy thông tin từ metrics nếu API trả về dạng lồng nhau.
+                    const metrics = data.metrics ?? {};
+
+                    document.getElementById("oldRmse").textContent =
+                        comparison.old_RMSE ??
+                        comparison.oldRmse ??
+                        "—";
+
+                    document.getElementById("newRmse").textContent =
+                        comparison.new_RMSE ??
+                        comparison.newRmse ??
+                        "—";
+
+                    document.getElementById("oldMae").textContent =
+                        comparison.old_MAE ??
+                        comparison.oldMae ??
+                        "—";
+
+                    document.getElementById("newMae").textContent =
+                        comparison.new_MAE ??
+                        comparison.newMae ??
+                        "—";
+
+                    document.getElementById("winnerModel").textContent =
+                        metrics.winner ??
+                        comparison.winner ??
+                        data.winner ??
+                        "—";
+
+                    document.getElementById("activeModel").textContent =
+                        metrics.active_model ??
+                        metrics.activeModel ??
+                        data.activeModel ??
+                        "—";
+
+                    document.getElementById("productsCount").textContent =
+                        metrics.products ??
+                        data.products ??
+                        "—";
+
+                    document.getElementById("trainingResult").classList.remove("d-none");
+                }
+
+
+            } catch (error) {
+                console.error("Cannot refresh training status:", error);
+            }
+        }
+
+        refreshTrainingStatus();
+
+        // Refresh trạng thái khi người dùng đang ở trang này.
+        setInterval(refreshTrainingStatus, 5000);
+    </script>
+
+}

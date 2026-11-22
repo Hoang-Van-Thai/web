@@ -1,111 +1,202 @@
 ﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using web.Services;
 using web.ViewModels;
 
-namespace web.Controllers
+namespace web.Controllers;
+
+public class ForecastController : Controller
 {
-    [Authorize]
-    public class ForecastController : Controller
+    private readonly IForecastService _forecastService;
+    private readonly ILogger<ForecastController> _logger;
+
+    public ForecastController(
+        IForecastService forecastService,
+        ILogger<ForecastController> logger)
     {
-        private readonly IForecastService _service;
+        _forecastService = forecastService;
+        _logger = logger;
+    }
 
-        public ForecastController(IForecastService service)
+    // Trang chính Forecast
+    [HttpGet]
+    public async Task<IActionResult> Index(
+        CancellationToken cancellationToken)
+    {
+        var model = new ForecastViewModel();
+
+        await LoadOptionsAsync(model, cancellationToken);
+
+        try
         {
-            _service = service;
-        }
+            var health = await _forecastService.CheckApiAsync(
+                cancellationToken);
 
-        public async Task<IActionResult> Index()
-        {
-            var model = await _service.GetIndexAsync();
-            return View(model);
-        }
+            model.ApiAvailable =
+                string.Equals(
+                    health.Status,
+                    "healthy",
+                    StringComparison.OrdinalIgnoreCase)
+                && health.ModelLoaded;
 
-        [HttpGet]
-        public async Task<IActionResult> Create()
-        {
-            var model = await _service.GetCreateViewModelAsync();
+            model.ActiveModel = health.ActiveModel;
 
-            if (model.Stores.Count == 0)
+            if (!model.ApiAvailable)
             {
-                TempData["Error"] = "Chưa có cửa hàng đang hoạt động.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (string.IsNullOrWhiteSpace(model.ActiveModelName))
-            {
-                TempData["Error"] =
-                    "Bạn cần đăng ký và kích hoạt Model trước khi dự báo.";
-
-                return RedirectToAction("Index", "ModelTraining");
-            }
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            ForecastCreateViewModel model,
-            CancellationToken cancellationToken)
-        {
-            if (!ModelState.IsValid)
-            {
-                var formData = await _service.GetCreateViewModelAsync();
-                model.Stores = formData.Stores;
-                model.ActiveModelName = formData.ActiveModelName;
-
-                return View(model);
-            }
-
-            int? userId = GetCurrentUserId();
-
-            try
-            {
-                var forecastRunId = await _service.CreateForecastAsync(
-                    model,
-                    userId,
-                    cancellationToken
-                );
-
-                TempData["Success"] = "Tạo dự báo thành công.";
-
-                return RedirectToAction(
-                    nameof(Details),
-                    new { id = forecastRunId }
-                );
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-
-                var formData = await _service.GetCreateViewModelAsync();
-                model.Stores = formData.Stores;
-                model.ActiveModelName = formData.ActiveModelName;
-
-                return View(model);
+                model.ErrorMessage =
+                    "Python API chưa sẵn sàng hoặc chưa load model.";
             }
         }
-
-        [HttpGet]
-        public async Task<IActionResult> Details(long id)
+        catch (Exception ex)
         {
-            var model = await _service.GetDetailsAsync(id);
+            _logger.LogWarning(
+                ex,
+                "Không kết nối được Forecast API.");
 
-            if (model == null)
-                return NotFound();
+            model.ApiAvailable = false;
 
-            return View(model);
+            model.ErrorMessage =
+                "Không thể kết nối Python API. " +
+                "Hãy kiểm tra server Python tại http://127.0.0.1:8000.";
         }
 
-        private int? GetCurrentUserId()
-        {
-            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return View(model);
+    }
 
-            return int.TryParse(value, out var userId)
-                ? userId
-                : null;
+    // Chuyển về trang Index
+    [HttpGet]
+    public IActionResult Create()
+    {
+        return RedirectToAction(nameof(Index));
+    }
+
+    // Thực hiện dự báo
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Run(
+        ForecastViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (model.ProductId <= 0)
+        {
+            ModelState.AddModelError(
+                nameof(model.ProductId),
+                "Vui lòng chọn sản phẩm.");
         }
+
+        if (model.StoreId <= 0)
+        {
+            ModelState.AddModelError(
+                nameof(model.StoreId),
+                "Vui lòng chọn cửa hàng.");
+        }
+
+        if (model.Days is not (7 or 14 or 28))
+        {
+            ModelState.AddModelError(
+                nameof(model.Days),
+                "Chỉ hỗ trợ dự báo 7, 14 hoặc 28 ngày.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadOptionsAsync(model, cancellationToken);
+
+            return View("Index", model);
+        }
+
+        try
+        {
+            int? userId = null;
+
+            var claimValue =
+                User.FindFirstValue("UserId")
+                ?? User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+            if (int.TryParse(claimValue, out var parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+
+            var result = await _forecastService.RunForecastAsync(
+                model.ProductId,
+                model.StoreId,
+                model.Days,
+                userId,
+                cancellationToken);
+
+            TempData["SuccessMessage"] =
+                "Dự báo thành công và đã lưu vào hệ thống.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id = result.ForecastRunId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Thực hiện dự báo thất bại.");
+
+            model.ErrorMessage = ex.Message;
+
+            await LoadOptionsAsync(model, cancellationToken);
+
+            return View("Index", model);
+        }
+    }
+
+    // Xem kết quả dự báo
+    [HttpGet]
+    public async Task<IActionResult> Details(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+            return BadRequest();
+
+        var result =
+            await _forecastService.GetForecastDetailsAsync(
+                id,
+                cancellationToken);
+
+        if (result == null)
+            return NotFound();
+
+        return View(result);
+    }
+
+    // Nạp danh sách sản phẩm và cửa hàng
+    private async Task LoadOptionsAsync(
+        ForecastViewModel model,
+        CancellationToken cancellationToken)
+    {
+        var products =
+            await _forecastService.GetProductsAsync(
+                cancellationToken);
+
+        var stores =
+            await _forecastService.GetStoresAsync(
+                cancellationToken);
+
+        model.Products = products.Select(x =>
+            new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name,
+                Selected = x.Id == model.ProductId
+            })
+            .ToList();
+
+        model.Stores = stores.Select(x =>
+            new SelectListItem
+            {
+                Value = x.Id.ToString(),
+                Text = x.Name,
+                Selected = x.Id == model.StoreId
+            })
+            .ToList();
     }
 }

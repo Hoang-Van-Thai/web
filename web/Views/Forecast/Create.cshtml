@@ -1,90 +1,18 @@
-﻿@model web.ViewModels.ForecastCreateViewModel
-
-@{
+﻿@{
     ViewData["Title"] = "Tạo dự báo";
 }
 
-<div class="container py-3">
-    <h3>Tạo phiên dự báo mới</h3>
+<div class="container py-4">
 
-    <p class="text-muted">
-        Hệ thống sẽ gửi dữ liệu bán hàng đến Python API để lấy kết quả dự báo.
-    </p>
+    <div class="alert alert-info">
 
-    <div class="card shadow-sm mt-3">
-        <div class="card-body">
-            <form asp-action="Create" method="post">
-                @Html.AntiForgeryToken()
+        Trang tạo dự báo đã được tích hợp vào trang chính.
 
-                <div asp-validation-summary="ModelOnly"
-                     class="alert alert-danger"></div>
+        <a asp-controller="Forecast"
+           asp-action="Index">
+            Đi đến trang dự báo
+        </a>
 
-                <div class="mb-3">
-                    <label class="form-label">Model đang sử dụng</label>
-                    <input class="form-control"
-                           value="@Model.ActiveModelName"
-                           readonly />
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="ForecastName" class="form-label"></label>
-                    <input asp-for="ForecastName" class="form-control"
-                           placeholder="Ví dụ: Dự báo nhu cầu tháng 11" />
-                    <span asp-validation-for="ForecastName"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="StoreId" class="form-label"></label>
-                    <select asp-for="StoreId" asp-items="Model.Stores"
-                            class="form-select">
-                        <option value="">-- Chọn cửa hàng --</option>
-                    </select>
-                    <span asp-validation-for="StoreId"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="StartDate" class="form-label"></label>
-                    <input asp-for="StartDate" type="date"
-                           class="form-control" />
-                    <span asp-validation-for="StartDate"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="HorizonDays" class="form-label"></label>
-                    <select asp-for="HorizonDays" class="form-select">
-                        <option value="7">7 ngày</option>
-                        <option value="14">14 ngày</option>
-                        <option value="28">28 ngày</option>
-                    </select>
-                    <span asp-validation-for="HorizonDays"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="alert alert-info">
-                    <strong>Lưu ý:</strong>
-                    Dữ liệu lịch sử 90 ngày trước ngày bắt đầu dự báo
-                    sẽ được gửi đến Python API. Cửa hàng cần có dữ liệu
-                    bán hàng trong khoảng thời gian này.
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary"
-                            onclick="this.disabled=true; this.form.submit();">
-                        Tạo dự báo
-                    </button>
-
-                    <a asp-action="Index" class="btn btn-secondary">
-                        Quay lại
-                    </a>
-                </div>
-            </form>
-        </div>
     </div>
-</div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+</div>
