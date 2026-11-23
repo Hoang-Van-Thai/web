@@ -82,6 +82,15 @@ builder.Services.AddHttpClient<
 builder.Services.AddScoped<
     IModelTrainingService,
     ModelTrainingService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+builder.Services.AddScoped<IAccountService, AccountService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("Email")
+);
 builder.Services.AddHttpClient<IForecastApiClient, ForecastApiClient>(
     (serviceProvider, client) =>
     {

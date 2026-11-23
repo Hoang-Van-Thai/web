@@ -1,0 +1,137 @@
+﻿@model web.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h3 class="text-center mb-4">
+                        Đăng ký tài khoản
+                    </h3>
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <form asp-action="Register"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="FullName"
+                                   class="form-label">
+                                Họ và tên
+                            </label>
+
+                            <input asp-for="FullName"
+                                   class="form-control"
+                                   placeholder="Nhập họ và tên" />
+
+                            <span asp-validation-for="FullName"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="Username"
+                                   class="form-label">
+                                Tên đăng nhập
+                            </label>
+
+                            <input asp-for="Username"
+                                   class="form-control"
+                                   placeholder="Nhập tên đăng nhập" />
+
+                            <span asp-validation-for="Username"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="Email"
+                                   class="form-label">
+                                Email
+                            </label>
+
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="form-control"
+                                   placeholder="example@gmail.com" />
+
+                            <span asp-validation-for="Email"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="Password"
+                                   class="form-label">
+                                Mật khẩu
+                            </label>
+
+                            <input asp-for="Password"
+                                   class="form-control"
+                                   placeholder="Ít nhất 6 ký tự" />
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="ConfirmPassword"
+                                   class="form-label">
+                                Xác nhận mật khẩu
+                            </label>
+
+                            <input asp-for="ConfirmPassword"
+                                   class="form-control"
+                                   placeholder="Nhập lại mật khẩu" />
+
+                            <span asp-validation-for="ConfirmPassword"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+
+                        <button type="submit"
+                                class="btn btn-primary w-100">
+                            Đăng ký
+                        </button>
+
+                    </form>
+
+
+                    <div class="text-center mt-3">
+
+                        <span>Đã có tài khoản?</span>
+
+                        <a asp-action="Login">
+                            Đăng nhập
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -33,6 +33,8 @@ public partial class RetailFlowDBContext : DbContext
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
 
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<PurchaseReceipt> PurchaseReceipts { get; set; }
@@ -177,6 +179,15 @@ public partial class RetailFlowDBContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.OrderDetails)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderDetails_Products");
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.PasswordResetTokenId).HasName("PK__Password__1606612858D1CFBB");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_PasswordResetTokens_CreatedAt");
+
+            entity.HasOne(d => d.User).WithMany(p => p.PasswordResetTokens).HasConstraintName("FK_PasswordResetTokens_Users");
         });
 
         modelBuilder.Entity<Product>(entity =>
